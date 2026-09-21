@@ -1440,14 +1440,27 @@ nsresult EmbedLiteChromeSessionChild::CreateTab(
     MakeUnique<TabRecord>(tabId, aPersistentId);
   record->openerId = openerId;
   TabRecord* tab = record.get();
-  mTabs.AppendElement(std::move(record));
+  uint32_t insertionIndex = mTabs.Length();
+  if (openerId) {
+    for (uint32_t index = 0; index < mTabs.Length(); ++index) {
+      if (mTabs[index]->id == openerId) {
+        insertionIndex = index + 1;
+        break;
+      }
+    }
+  }
+  mTabs.InsertElementAt(insertionIndex, std::move(record));
 
   nsresult rv = CreateBrowserForTab(
     *tab, aOpenWindowInfo, aName, aInBackground,
     aBrowser, aBrowsingContext);
   if (NS_FAILED(rv)) {
-    MOZ_RELEASE_ASSERT(mTabs.LastElement().get() == tab);
-    mTabs.RemoveLastElement();
+    for (uint32_t index = 0; index < mTabs.Length(); ++index) {
+      if (mTabs[index].get() == tab) {
+        mTabs.RemoveElementAt(index);
+        break;
+      }
+    }
     return rv;
   }
 
