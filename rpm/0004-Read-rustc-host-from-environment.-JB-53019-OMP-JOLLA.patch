@@ -8,7 +8,7 @@ Subject: Read rustc host from environment. JB#53019 OMP#JOLLA-93
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/build/moz.configure/rust.configure b/build/moz.configure/rust.configure
-index a89585f6f81d..2e6921ab719f 100644
+index aad2cbd379ca..93ecdd9db88b 100644
 --- a/build/moz.configure/rust.configure
 +++ b/build/moz.configure/rust.configure
 @@ -99,6 +99,7 @@ set_config("RUSTC", rustc)

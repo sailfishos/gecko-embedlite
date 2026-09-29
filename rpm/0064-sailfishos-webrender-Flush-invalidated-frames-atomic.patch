@@ -9,7 +9,7 @@ Subject: Flush invalidated frames atomically
  2 files changed, 41 insertions(+), 10 deletions(-)
 
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index ff1c2beec83f..b253237ef469 100644
+index a4c7580a5838..707158d1ee85 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
 @@ -1818,19 +1818,22 @@ void WebRenderBridgeParent::FlushSceneBuilds() {
@@ -48,7 +48,7 @@ index ff1c2beec83f..b253237ef469 100644
    mLateInit->mApi->Readback(start, size, bufferTexture->GetFormat(),
                              Range<uint8_t>(buffer, buffer_size.value()),
                              aNeedsYFlip);
-@@ -2368,7 +2372,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvSyncWithCompositor() {
+@@ -2379,7 +2383,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvSyncWithCompositor() {
  
    FlushSceneBuilds();
    if (RefPtr<WebRenderBridgeParent> root = GetRootWebRenderBridgeParent()) {
@@ -58,7 +58,7 @@ index ff1c2beec83f..b253237ef469 100644
    }
    FlushFramePresentation();
    // Finally, we force the AsyncImagePipelineManager to handle all the
-@@ -2611,7 +2616,8 @@ void WebRenderBridgeParent::CompositeToTarget(VsyncId aId,
+@@ -2622,7 +2627,8 @@ void WebRenderBridgeParent::CompositeToTarget(VsyncId aId,
    }
  
    mCompositionOpportunityId = mCompositionOpportunityId.Next();
@@ -68,7 +68,7 @@ index ff1c2beec83f..b253237ef469 100644
  }
  
  TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
-@@ -2625,7 +2631,8 @@ TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
+@@ -2636,7 +2642,8 @@ TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
  
  void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
                                                 bool aForceGenerateFrame,
@@ -78,7 +78,7 @@ index ff1c2beec83f..b253237ef469 100644
    // This function should only get called in the root WRBP
    MOZ_ASSERT(IsRootWebRenderBridgeParent());
    LOG("WebRenderBridgeParent::MaybeGenerateFrame() PipelineId %" PRIx64
-@@ -2655,6 +2662,9 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
+@@ -2666,6 +2673,9 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
    // generating frames with the old scene even during slow scene builds.
    wr::TransactionBuilder fastTxn(mLateInit->mApi,
                                   false /* useSceneBuilderThread */);
@@ -88,7 +88,7 @@ index ff1c2beec83f..b253237ef469 100644
    // Handle transaction that is related to DisplayList.
    wr::TransactionBuilder sceneBuilderTxn(mLateInit->mApi);
    wr::AutoTransactionSender sender(mLateInit->mApi, &sceneBuilderTxn);
-@@ -2943,13 +2953,26 @@ void WebRenderBridgeParent::FlushRendering(wr::RenderReasons aReasons,
+@@ -2954,13 +2964,26 @@ void WebRenderBridgeParent::FlushRendering(wr::RenderReasons aReasons,
  
    if (aBlocking) {
      FlushSceneBuilds();

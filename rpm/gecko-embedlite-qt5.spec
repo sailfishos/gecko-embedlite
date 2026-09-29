@@ -50,7 +50,7 @@
 
 Name:       gecko-embedlite-qt5
 Summary:    Gecko EmbedLite runtime
-Version:    153.3.0
+Version:    153.4.0
 Release:    1
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/gecko-dev

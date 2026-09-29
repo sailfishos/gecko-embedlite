@@ -12,7 +12,7 @@ CreateChild implementation by adding a virtual allocation hook.
  2 files changed, 9 insertions(+), 4 deletions(-)
 
 diff --git a/widget/nsIWidget.cpp b/widget/nsIWidget.cpp
-index 32b3ca63d24a..7b83fd8521a1 100644
+index 033e55b70ed8..db346dfc065b 100644
 --- a/widget/nsIWidget.cpp
 +++ b/widget/nsIWidget.cpp
 @@ -536,11 +536,9 @@ already_AddRefed<nsIWidget> nsIWidget::CreateChild(
@@ -30,7 +30,7 @@ index 32b3ca63d24a..7b83fd8521a1 100644
  
    if (!widget) {
 diff --git a/widget/nsIWidget.h b/widget/nsIWidget.h
-index 3710ed9e8d00..086add102073 100644
+index ca248338ae6c..f3e0d4ef268a 100644
 --- a/widget/nsIWidget.h
 +++ b/widget/nsIWidget.h
 @@ -2131,6 +2131,13 @@ class nsIWidget : public nsSupportsWeakReference {

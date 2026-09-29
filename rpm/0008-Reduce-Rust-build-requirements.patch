@@ -29,10 +29,10 @@ may be a better fix.
  2 files changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/build/moz.configure/rust.configure b/build/moz.configure/rust.configure
-index 2e6921ab719f..9c066d8a32b5 100644
+index 93ecdd9db88b..8109d74fb3cf 100644
 --- a/build/moz.configure/rust.configure
 +++ b/build/moz.configure/rust.configure
-@@ -642,7 +642,6 @@ set_config("CARGO_PROFILE_DEV_OPT_LEVEL", rustc_opt_level)
+@@ -663,7 +663,6 @@ set_config("CARGO_PROFILE_DEV_OPT_LEVEL", rustc_opt_level)
      rustc_opt_level,
      debug_rust,
      target,
@@ -40,7 +40,7 @@ index 2e6921ab719f..9c066d8a32b5 100644
      "--enable-frame-pointers",
      path_remapping,
      path_remappings,
-@@ -651,7 +650,6 @@ def rust_compile_flags(
+@@ -672,7 +671,6 @@ def rust_compile_flags(
      opt_level,
      debug_rust,
      target,
@@ -48,7 +48,7 @@ index 2e6921ab719f..9c066d8a32b5 100644
      frame_pointers,
      path_remapping,
      path_remappings,
-@@ -676,8 +674,8 @@ def rust_compile_flags(
+@@ -697,8 +695,8 @@ def rust_compile_flags(
      if opt_level == "0" and not debug_rust:
          debug_assertions = False
  

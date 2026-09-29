@@ -185,10 +185,10 @@ index 34c210377b84..84a0cd27c3d7 100644
    bool MakeCurrent() override;
  
 diff --git a/gfx/webrender_bindings/RenderThread.cpp b/gfx/webrender_bindings/RenderThread.cpp
-index 729c04961600..db5bede09c0a 100644
+index 0e976df8b556..ecc716db1003 100644
 --- a/gfx/webrender_bindings/RenderThread.cpp
 +++ b/gfx/webrender_bindings/RenderThread.cpp
-@@ -1671,7 +1671,8 @@ static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
+@@ -1675,7 +1675,8 @@ static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
  }
  #endif
  
@@ -198,7 +198,7 @@ index 729c04961600..db5bede09c0a 100644
  static already_AddRefed<gl::GLContext> CreateGLContextEGL() {
    // Create GLContext with dummy EGLSurface.
    bool forHardwareWebRender = true;
-@@ -1708,7 +1709,7 @@ static already_AddRefed<gl::GLContext> CreateGLContext(nsACString& aError) {
+@@ -1712,7 +1713,7 @@ static already_AddRefed<gl::GLContext> CreateGLContext(nsACString& aError) {
    if (gfx::gfxVars::UseWebRenderANGLE()) {
      gl = CreateGLContextANGLE(aError);
    }
@@ -223,7 +223,7 @@ index 28d16fa743ef..388cd66aafa5 100644
  void* RendererOGL::swgl() const { return mCompositor->swgl(); }
  
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index 1472edddfdce..8dda2979a5f6 100644
+index d783a87a172a..e1be4cebd552 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -8591,7 +8591,7 @@
@@ -236,7 +236,7 @@ index 1472edddfdce..8dda2979a5f6 100644
    type: bool
  #if defined(MOZ_WIDGET_ANDROID)
 diff --git a/widget/nsIWidget.cpp b/widget/nsIWidget.cpp
-index 4a7b4754ea9b..32b3ca63d24a 100644
+index 74fa56fa7c03..033e55b70ed8 100644
 --- a/widget/nsIWidget.cpp
 +++ b/widget/nsIWidget.cpp
 @@ -1486,6 +1486,8 @@ already_AddRefed<WebRenderLayerManager> nsIWidget::CreateCompositorSession(

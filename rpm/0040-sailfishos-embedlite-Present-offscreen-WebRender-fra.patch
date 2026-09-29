@@ -64,7 +64,7 @@ EmbedLite frames in order to publish the completed offscreen image.
  create mode 100644 widget/EmbedLiteCompositorWidget.h
 
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 0122df8a7f1f..6e079a4ed32a 100644
+index 90e61367637d..1ea4168db23f 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -156,6 +156,8 @@
@@ -128,10 +128,10 @@ index 0122df8a7f1f..6e079a4ed32a 100644
      const ViewportMetaData& aViewportMetaData) {
    if (aViewportMetaData.mInteractiveWidgetMode.IsEmpty()) {
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index 42c105bb323f..3f5450da3d01 100644
+index 4ac0e9d0041a..be609439fe0c 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
-@@ -1363,6 +1363,9 @@ class Document : public nsINode,
+@@ -1364,6 +1364,9 @@ class Document : public nsINode,
    // Returns a ViewportMetaData for this document.
    ViewportMetaData GetViewportMetaData() const;
  
@@ -141,7 +141,7 @@ index 42c105bb323f..3f5450da3d01 100644
    /**
     * True iff this doc will ignore manual character encoding overrides.
     */
-@@ -5605,6 +5608,10 @@ class Document : public nsINode,
+@@ -5610,6 +5613,10 @@ class Document : public nsINode,
    // https://drafts.csswg.org/css-viewport/#interactive-widget-section
    dom::InteractiveWidget mInteractiveWidgetMode;
  
@@ -631,7 +631,7 @@ index 15a81dd75aff..3e8929eecd13 100644
        CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(
            aScale, aOptions, aUseExternalSurfaceSize, aSurfaceSize,
 diff --git a/gfx/layers/ipc/CompositorBridgeParent.cpp b/gfx/layers/ipc/CompositorBridgeParent.cpp
-index 62392b009a55..418ae589eef0 100644
+index eb39d668a577..257140b65d0c 100644
 --- a/gfx/layers/ipc/CompositorBridgeParent.cpp
 +++ b/gfx/layers/ipc/CompositorBridgeParent.cpp
 @@ -1240,6 +1240,13 @@ void CompositorBridgeParent::EnsureWebRenderBridgeParentInitialized() {
@@ -649,7 +649,7 @@ index 62392b009a55..418ae589eef0 100644
    if (mWrBridge) {
      RefPtr<wr::WebRenderAPI> api = mWrBridge->GetWebRenderAPI();
 diff --git a/gfx/layers/ipc/CompositorBridgeParent.h b/gfx/layers/ipc/CompositorBridgeParent.h
-index 2c9aa8377929..fd25b9bbb1bb 100644
+index bb5af4036004..96380671adc3 100644
 --- a/gfx/layers/ipc/CompositorBridgeParent.h
 +++ b/gfx/layers/ipc/CompositorBridgeParent.h
 @@ -26,6 +26,10 @@
@@ -672,7 +672,7 @@ index 2c9aa8377929..fd25b9bbb1bb 100644
    friend class CompositorThreadHolder;
    friend class InProcessCompositorSession;
    friend class gfx::GPUProcessManager;
-@@ -556,6 +560,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
+@@ -550,6 +554,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
        const WindowKind& aWindowKind) override;
    void EnsureWebRenderBridgeParentInitialized() override;
    RefPtr<WebRenderBridgeParent> GetWebRenderBridgeParent() const;
@@ -719,10 +719,10 @@ index c32ce744a2ac..67b918066c01 100644
    sInstance->mPendingCompositorBridges.AppendElement(bridge);
    return bridge.forget();
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index aedd0c3605c8..ff1c2beec83f 100644
+index 516dfd47c6a1..a4c7580a5838 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
-@@ -3218,6 +3218,12 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
+@@ -3229,6 +3229,12 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
  
  void WebRenderBridgeParent::CompositeToDefaultTarget(
      VsyncId aId, wr::RenderReasons aReasons) {
@@ -1295,7 +1295,7 @@ index 392656638935..d9a5e291c6cb 100644
    void PrependSheetOfType(Origin, StyleSheet*);
    void AppendSheetOfType(Origin, StyleSheet*);
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index 778ec68df690..1472edddfdce 100644
+index aadd37633541..d783a87a172a 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -15122,7 +15122,7 @@

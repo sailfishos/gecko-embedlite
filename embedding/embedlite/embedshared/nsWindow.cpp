@@ -28,6 +28,7 @@
 #include "mozilla/dom/KeyboardEventBinding.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
 #include "mozilla/layers/APZEventState.h"
+#include "mozilla/layers/APZInputBridge.h"
 #include "mozilla/layers/ChromeProcessController.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/IAPZCTreeManager.h"
@@ -839,11 +840,11 @@ nsWindow::ConfigureChromeAPZ()
     return;
   }
 
-  mAPZC->SetDPI(GetDPI());
+  mAPZC->InputBridge()->SetDPI(GetDPI());
   if (StaticPrefs::apz_keyboard_enabled_AtStartup()) {
     KeyboardMap map =
       RootWindowGlobalKeyListener::CollectKeyboardShortcuts();
-    mAPZC->SetKeyboardMap(map);
+    mAPZC->InputBridge()->SetKeyboardMap(map);
   }
 
   ContentReceivedInputBlockCallback callback(

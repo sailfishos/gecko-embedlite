@@ -12,6 +12,7 @@
 #include "mozilla/SpinEventLoopUntil.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
+#include "mozilla/layers/APZInputBridge.h"
 #include "mozilla/layers/IAPZCTreeManager.h"
 #include "mozilla/widget/IMEData.h"
 #include "nsCOMPtr.h"
@@ -54,7 +55,8 @@ private:
   ~TestEmbedLitePuppetWidget() override = default;
 };
 
-class RecordingAPZTreeManager final : public IAPZCTreeManager
+class RecordingAPZTreeManager final : public IAPZCTreeManager,
+                                      public APZInputBridge
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RecordingAPZTreeManager, override)
@@ -75,19 +77,29 @@ public:
       uint64_t, BrowserGestureResponse) override {}
   void StartScrollbarDrag(
       const ScrollableLayerGuid&, const AsyncDragMetrics&) override {}
-  bool StartAutoscroll(
-      const ScrollableLayerGuid&, const mozilla::ScreenPoint&) override {
-    return false;
+  void StartAutoscroll(
+      const ScrollableLayerGuid&, const mozilla::ScreenPoint&) override {}
+  mozilla::layers::APZEventResult ReceiveInputEvent(
+      mozilla::InputData&, InputBlockCallback&&) override
+  {
+    return mozilla::layers::APZEventResult();
   }
   void StopAutoscroll(const ScrollableLayerGuid&) override {}
   void SetLongTapEnabled(bool) override {}
   void NotifyApzAwareListenerAdded(
       const ScrollableLayerGuid&) override {}
-  APZInputBridge* InputBridge() override { return nullptr; }
+  APZInputBridge* InputBridge() override { return this; }
 
   float mDPI = 0.0f;
 
 private:
+  void ProcessUnhandledEvent(
+      mozilla::LayoutDeviceIntPoint*, ScrollableLayerGuid*, uint64_t*,
+      mozilla::layers::LayersId*) override {}
+  void UpdateWheelTransaction(
+      mozilla::LayoutDeviceIntPoint, mozilla::EventMessage,
+      const mozilla::Maybe<ScrollableLayerGuid>&) override {}
+
   ~RecordingAPZTreeManager() override = default;
 };
 

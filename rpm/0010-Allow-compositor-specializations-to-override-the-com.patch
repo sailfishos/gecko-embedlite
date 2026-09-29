@@ -63,10 +63,10 @@ index b07e07dfb75e..cfb6de0b8aa7 100644
  
  }  // namespace layers
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index fb16eec12ff1..aedd0c3605c8 100644
+index 0eeb9ac9a7f8..516dfd47c6a1 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
-@@ -3216,5 +3216,10 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
+@@ -3227,5 +3227,10 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
    MOZ_ASSERT(!mWebRenderBridge);
  }
  

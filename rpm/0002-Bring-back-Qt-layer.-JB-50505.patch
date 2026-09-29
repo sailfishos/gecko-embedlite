@@ -1515,7 +1515,7 @@ index 1f9613b8cd93..7661db0fd79e 100644
        return true;
  #elif defined(XP_MACOSX)
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index c00a539cb2f3..e242cd724d8c 100644
+index d5f863b1082d..457facc254c7 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -7768,7 +7768,7 @@
@@ -1763,7 +1763,7 @@ index 390b16041f35..b469578830e1 100644
      UNIFIED_SOURCES += [
          "nsNativeAppSupportUnix.cpp",
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 0b0e8a138e45..4bacb86e5f8b 100644
+index 9f7bc0300111..7f3bc625681f 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
 @@ -2,6 +2,12 @@
@@ -1832,7 +1832,7 @@ index 0b0e8a138e45..4bacb86e5f8b 100644
  #if defined(MOZ_WIDGET_GTK)
    // setup for private colormap.  Ideally we'd like to do this
    // in nsAppShell::Create, but we need to get in before gtk
-@@ -6600,6 +6636,10 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
+@@ -6593,6 +6629,10 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
    mProfileLock->Unlock();
    gProfileLock = nullptr;
  

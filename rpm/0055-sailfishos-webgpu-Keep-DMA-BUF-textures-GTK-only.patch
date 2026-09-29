@@ -132,7 +132,7 @@ index 9c05835bc8d9..0ce569e07333 100644
          "SharedTextureDMABuf.h",
      ]
 diff --git a/gfx/wgpu_bindings/Cargo.toml b/gfx/wgpu_bindings/Cargo.toml
-index ea6d972697f0..3a631587fe1e 100644
+index ac89d8a8036f..8a01488de178 100644
 --- a/gfx/wgpu_bindings/Cargo.toml
 +++ b/gfx/wgpu_bindings/Cargo.toml
 @@ -13,6 +13,7 @@ publish = false
