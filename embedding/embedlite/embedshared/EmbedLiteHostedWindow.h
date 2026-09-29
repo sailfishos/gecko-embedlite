@@ -68,34 +68,31 @@ private:
   void ChromeInputContextChanged(const widget::InputContext& aContext,
                                  const widget::InputContextAction& aAction);
   bool OnTabSnapshot(const EmbedLiteChromeSessionData& aSnapshot);
-  bool OnBeforeUnloadPrompt(
-    const EmbedLiteChromeBeforeUnloadData& aPrompt);
+  bool OnBeforeUnloadPrompt(const EmbedLiteChromeBeforeUnloadData& aPrompt);
   bool OnTabCloseResult(uint64_t aTabId, bool aClosed);
-  bool OnContentStateChanged(
-    const EmbedLiteChromeContentStateData& aState);
-  bool OnContentAsyncMessage(
-    uint64_t aTabId, uint64_t aPersistentId,
-    uint64_t aLocationRevision, const nsAString& aName,
-    const nsAString& aJSON);
+  bool OnContentStateChanged(const EmbedLiteChromeContentStateData& aState);
+  bool OnContentAsyncMessage(uint64_t aTabId, uint64_t aPersistentId,
+                             uint64_t aLocationRevision, const nsAString& aName,
+                             const nsAString& aJSON);
   bool OnContentWindowCloseRequested(uint64_t aTabId,
                                      uint64_t aPersistentId);
 
-  bool Destroy();
-  bool SetSize(const gfxSize& aSize);
-  bool SetContentOrientation(uint32_t aRotation);
-  bool LoadURL(const nsACString& aURL, bool aFromExternal);
-  bool GoBack(bool aRequireUserInteraction, bool aUserActivation);
-  bool GoForward(bool aRequireUserInteraction, bool aUserActivation);
-  bool StopLoad();
-  bool Reload(bool aHardReload);
+  void Destroy();
+  void SetSize(const gfxSize& aSize);
+  void SetContentOrientation(uint32_t aRotation);
+  void LoadURL(const nsACString& aURL, bool aFromExternal);
+  void GoBack(bool aRequireUserInteraction, bool aUserActivation);
+  void GoForward(bool aRequireUserInteraction, bool aUserActivation);
+  void StopLoad();
+  void Reload(bool aHardReload);
   bool RestoreTabs(const nsTArray<EmbedLiteChromeTabRestoreData>& aTabs,
                    int32_t aSelectedTabIndex);
-  bool NewTab(const nsACString& aURL, uint64_t aPersistentId,
+  void NewTab(const nsACString& aURL, uint64_t aPersistentId,
               bool aFromExternal, bool aInBackground);
-  bool AssociateTab(uint64_t aTabId, uint64_t aPersistentId);
-  bool SelectTab(uint64_t aTabId);
-  bool CloseTab(uint64_t aTabId);
-  bool ResolveBeforeUnloadPrompt(uint64_t aRequestId, uint64_t aTabId,
+  void AssociateTab(uint64_t aTabId, uint64_t aPersistentId);
+  void SelectTab(uint64_t aTabId);
+  void CloseTab(uint64_t aTabId);
+  void ResolveBeforeUnloadPrompt(uint64_t aRequestId, uint64_t aTabId,
                                  bool aPermit);
   bool LoadContentFrameScript(const nsACString& aURI);
   bool AddContentMessageListener(const nsACString& aName);
@@ -109,26 +106,26 @@ private:
   bool SendContentWheelEvent(uint64_t aTabId, int32_t aX, int32_t aY,
                              uint64_t aTime, double aDeltaX, double aDeltaY,
                              uint32_t aDeltaMode, uint32_t aModifiers);
-  bool ContentScrollTo(uint64_t aTabId, int32_t aX, int32_t aY);
-  bool ContentScrollBy(uint64_t aTabId, int32_t aX, int32_t aY);
+  void ContentScrollTo(uint64_t aTabId, int32_t aX, int32_t aY);
+  void ContentScrollBy(uint64_t aTabId, int32_t aX, int32_t aY);
   bool ContentZoomToRect(uint64_t aTabId, float aX, float aY,
                          float aWidth, float aHeight);
-  bool SetContentDesktopMode(uint64_t aTabId, bool aValue);
+  void SetContentDesktopMode(uint64_t aTabId, bool aValue);
   bool SetContentJavascriptEnabled(bool aEnabled);
-  bool SetContentThrottlePainting(uint64_t aTabId, bool aValue);
-  bool SuspendContentTimeouts(uint64_t aTabId);
-  bool ResumeContentTimeouts(uint64_t aTabId);
+  void SetContentThrottlePainting(uint64_t aTabId, bool aValue);
+  void SuspendContentTimeouts(uint64_t aTabId);
+  void ResumeContentTimeouts(uint64_t aTabId);
   bool SetContentHttpUserAgent(uint64_t aTabId, const nsAString& aValue);
-  bool SetContentMargins(uint64_t aTabId, int32_t aTop, int32_t aRight,
+  void SetContentMargins(uint64_t aTabId, int32_t aTop, int32_t aRight,
                          int32_t aBottom, int32_t aLeft);
-  bool SetContentSafeAreaInsets(uint64_t aTabId, int32_t aTop,
+  void SetContentSafeAreaInsets(uint64_t aTabId, int32_t aTop,
                                 int32_t aRight, int32_t aBottom,
                                 int32_t aLeft);
   bool SetContentDynamicToolbarHeight(uint64_t aTabId, int32_t aHeight);
   bool SetContentScreenProperties(int32_t aDepth, float aDensity,
                                   float aDpi);
-  bool SetActive(bool aActive);
-  bool SetFocused(bool aFocused);
+  void SetActive(bool aActive);
+  void SetFocused(bool aFocused);
   bool HandleTextEvent(const nsACString& aCommit,
                        const nsACString& aPreEdit,
                        int32_t aReplacementStart,
@@ -141,7 +138,7 @@ private:
                            int32_t aCharCode);
   bool HandleKeyReleaseEvent(int32_t aDomKeyCode, int32_t aModifiers,
                              int32_t aCharCode);
-  bool ReceiveInputEvent(const MultiTouchInput& aEvent);
+  void ReceiveInputEvent(const MultiTouchInput& aEvent);
   void RefreshScreen();
 
   uint32_t mId;
