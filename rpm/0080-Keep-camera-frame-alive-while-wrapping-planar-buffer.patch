@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Wed, 30 Sep 2026 12:58:56 +0200
+Subject: Keep camera frame alive while wrapping planar buffers
+
+Copy the frame owner into the release callback so evaluating the callback
+argument cannot invalidate the other arguments to WrapI420Buffer.
+---
+ .../libwebrtc/modules/video_capture/sfos/video_capture_sfos.cc  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/third_party/libwebrtc/modules/video_capture/sfos/video_capture_sfos.cc b/third_party/libwebrtc/modules/video_capture/sfos/video_capture_sfos.cc
+index dcf9eded901b..c6db97afc6e1 100644
+--- a/third_party/libwebrtc/modules/video_capture/sfos/video_capture_sfos.cc
++++ b/third_party/libwebrtc/modules/video_capture/sfos/video_capture_sfos.cc
+@@ -172,7 +172,7 @@ void VideoCaptureModuleSFOS::onCameraFrame(
+     buffer = WrapI420Buffer(
+         frame->width, frame->height, frame->y, frame->yStride, frame->cb,
+         frame->cStride, frame->cr, frame->cStride,
+-        [frame = std::move(frame)]() {});
++        [frame]() {});
+   } else if (frame->chromaStep == 2) {
+     auto owned_buffer = I420Buffer::Create(frame->width, frame->height);
+     const int result = libyuv::Android420ToI420(

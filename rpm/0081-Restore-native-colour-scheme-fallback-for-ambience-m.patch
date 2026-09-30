@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Wed, 30 Sep 2026 12:59:15 +0200
+Subject: Restore native colour scheme fallback for ambience mode
+
+Treat ui.systemUsesDarkTheme=2 as a request for the platform colour
+scheme rather than an explicit dark theme override.
+---
+ widget/nsXPLookAndFeel.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/widget/nsXPLookAndFeel.cpp b/widget/nsXPLookAndFeel.cpp
+index 34b327e08b2d..89f652ad71e4 100644
+--- a/widget/nsXPLookAndFeel.cpp
++++ b/widget/nsXPLookAndFeel.cpp
+@@ -1023,7 +1023,8 @@ Maybe<nscolor> nsXPLookAndFeel::GetUncachedColor(ColorID aID,
+ }
+ 
+ nsresult nsXPLookAndFeel::GetIntValue(IntID aID, int32_t& aResult) {
+-  if (NS_SUCCEEDED(Preferences::GetInt(sIntPrefs[size_t(aID)], &aResult))) {
++  if (NS_SUCCEEDED(Preferences::GetInt(sIntPrefs[size_t(aID)], &aResult)) &&
++      (aID != IntID::SystemUsesDarkTheme || aResult != 2)) {
+     return NS_OK;
+   }
+ 

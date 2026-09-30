@@ -136,6 +136,8 @@ Patch76:    0076-sailfishos-media-Keep-gecko-camera-decoding-in-RDD.patch
 Patch77:    0077-sailfishos-qt-Use-minimal-QPA-in-media-decoder-proc.patch
 Patch78:    0078-sailfishos-history-Use-Android-BFCache-sizing-on-Qt.patch
 Patch79:    0079-sailfishos-build-Version-the-EmbedLite-libxul-SONAM.patch
+Patch80:    0080-Keep-camera-frame-alive-while-wrapping-planar-buffer.patch
+Patch81:    0081-Restore-native-colour-scheme-fallback-for-ambience-m.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0

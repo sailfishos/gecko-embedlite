@@ -2520,12 +2520,23 @@ bool EmbedLiteChromeSessionChild::SendContentMessageToEmbedder(
         aName.Length(), aJSON.Length())) {
     return false;
   }
+  RefPtr<EmbedLiteChromeSessionChild> self(this);
+  const uint64_t persistentId = tab->persistentId;
+  const uint64_t locationRevision = tab->locationRevision;
   return SendAfterPendingChromeTabSnapshot(
     mTabSnapshotPending,
     [this]() { SendTabSnapshot(); },
-    [this, tab, &aName, &aJSON]() {
+    [this, aTabId, persistentId, locationRevision, &aName, &aJSON]() {
+      // Snapshot callbacks can close the tab, navigate it, or shut us down.
+      TabRecord* current = FindTab(aTabId);
+      if (!mWindow || !current ||
+          !IsChromeContentNotificationCurrent(
+            aTabId, persistentId, locationRevision,
+            current->id, current->persistentId, current->locationRevision)) {
+        return false;
+      }
       return mWindow->OnContentAsyncMessage(
-        tab->id, tab->persistentId, tab->locationRevision,
+        aTabId, persistentId, locationRevision,
         nsString(aName), nsString(aJSON));
     });
 }
@@ -3290,14 +3301,19 @@ EmbedLiteChromeSessionChild::HandleEvent(Event* aEvent)
   } else if (type.EqualsLiteral("DOMWindowClose")) {
     aEvent->PreventDefault();
     if (!tab->restoring) {
+      RefPtr<EmbedLiteChromeSessionChild> self(this);
+      const uint64_t tabId = tab->id;
+      const uint64_t persistentId = tab->persistentId;
       SendAfterPendingChromeTabSnapshot(
         mTabSnapshotPending,
         [this]() { SendTabSnapshot(); },
-        [this, tab]() {
-          (void) mWindow->OnContentWindowCloseRequested(
-            tab->id, tab->persistentId);
+        [this, tabId, persistentId]() {
+          if (mWindow && FindTab(tabId)) {
+            (void) mWindow->OnContentWindowCloseRequested(tabId, persistentId);
+          }
         });
-      RemoveTab(tab->id);
+      // The close-request callback may also have removed the tab.
+      RemoveTab(tabId);
     }
   } else if (type.EqualsLiteral("oop-browser-crashed") ||
              type.EqualsLiteral("oop-browser-buildid-mismatch")) {
