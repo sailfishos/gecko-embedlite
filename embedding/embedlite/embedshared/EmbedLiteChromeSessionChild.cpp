@@ -612,33 +612,36 @@ bool EmbedLiteChromeSessionChild::DispatchContentCommand(
       mShuttingDown) {
     return false;
   }
+  // Synchronous content handlers can destroy the tab during dispatch.
+  RefPtr<EmbedLiteChromeSessionChild> self(this);
+  RefPtr<dom::Element> browser = aTab.browser;
   ErrorResult error;
-  aTab.browser->SetAttribute(
+  browser->SetAttribute(
     u"data-embedlite-command"_ns, aCommand, error);
   if (error.Failed()) {
     error.SuppressException();
     return false;
   }
-  aTab.browser->SetAttribute(
+  browser->SetAttribute(
     u"data-embedlite-command-data"_ns, aData, error);
   if (error.Failed()) {
     error.SuppressException();
     return false;
   }
-  RefPtr<Event> event = NS_NewDOMEvent(aTab.browser, nullptr, nullptr);
+  RefPtr<Event> event = NS_NewDOMEvent(browser, nullptr, nullptr);
   if (!event) {
     return false;
   }
   event->InitEvent(u"EmbedLiteChromeContentCommand"_ns, true, false);
-  const bool dispatched = aTab.browser->DispatchEvent(
+  const bool dispatched = browser->DispatchEvent(
     *event, CallerType::NonSystem, error);
   const bool dispatchFailed = error.Failed();
   error.SuppressException();
-  aTab.browser->RemoveAttribute(u"data-embedlite-command"_ns, error);
+  browser->RemoveAttribute(u"data-embedlite-command"_ns, error);
   error.SuppressException();
-  aTab.browser->RemoveAttribute(u"data-embedlite-command-data"_ns, error);
+  browser->RemoveAttribute(u"data-embedlite-command-data"_ns, error);
   error.SuppressException();
-  aTab.browser->RemoveAttribute(u"data-embedlite-command-name"_ns, error);
+  browser->RemoveAttribute(u"data-embedlite-command-name"_ns, error);
   error.SuppressException();
   return !dispatchFailed && dispatched;
 }
@@ -2565,15 +2568,23 @@ bool EmbedLiteChromeSessionChild::SetHttpUserAgent(
     uint64_t aTabId, const nsAString& aUserAgent)
 {
   TabRecord* tab = FindTab(aTabId);
-  if (!tab) {
+  if (!tab || !tab->browser || tab->crashed || tab->discarded ||
+      tab->restoring || mShuttingDown) {
     return false;
   }
+  RefPtr<EmbedLiteChromeSessionChild> self(this);
+  RefPtr<dom::Element> browser = tab->browser;
   ErrorResult error;
   tab->browser->SetAttribute(u"data-embedlite-command-name"_ns,
                              aUserAgent, error);
   if (error.Failed() || !DispatchContentCommand(
         *tab, u"set-user-agent"_ns, u"{}"_ns)) {
     error.SuppressException();
+    return false;
+  }
+  // Dispatch can synchronously close or replace the originating tab.
+  tab = FindTab(aTabId);
+  if (!tab || tab->browser != browser || mShuttingDown) {
     return false;
   }
   tab->httpUserAgent = aUserAgent;

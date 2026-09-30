@@ -250,9 +250,12 @@ bool EmbedLiteHostedWindow::RestoreTabs(
     return false;
   }
 
+  RefPtr<EmbedLiteHostedWindow> self(this);
+  RefPtr<EmbedLiteChromeSessionChild> session = mChromeSession;
   mRestoreTabsReceived = true;
-  if (mChromeSession) {
-    if (!mChromeSession->RestoreTabs(aTabs, aSelectedTabIndex)) {
+  if (session) {
+    if (!session->RestoreTabs(aTabs, aSelectedTabIndex)) {
+      mRestoreTabsReceived = false;
       return false;
     }
   } else {
