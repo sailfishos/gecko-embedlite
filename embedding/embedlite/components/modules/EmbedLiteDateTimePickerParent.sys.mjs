@@ -10,6 +10,7 @@ const Ci = Components.interfaces;
 const DATE_PICKER_REQUEST = "embed:datepicker";
 const DATE_PICKER_ABORT = "embed:datepickerabort";
 const DATE_PICKER_RESPONSE = "embedui:datepickerresponse";
+const DAY = 86400000;
 let nextRequestId = 0;
 
 // JSWindowActor modules must export <registered actor name>Parent.
@@ -38,9 +39,7 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
     }
 
     this.#cancelEmbedPicker();
-    // The Sailfish UI currently provides a native date picker only. Keep the
-    // standard Gecko panel for the time and datetime-local input types.
-    if (data.type !== "date") {
+    if (!["date", "time", "datetime-local"].includes(data.type)) {
       super.showPicker(data);
       return;
     }
@@ -64,7 +63,24 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
       return;
     }
 
-    const detail = data.detail || {};
+    const detail = {
+      ...data.detail,
+      dateTime: data.type === "datetime-local",
+      timeOnly: data.type === "time",
+      timeValue: data.detail?.value,
+      timeMin: data.detail?.min,
+      timeMax: data.detail?.max,
+    };
+    if (detail.dateTime) {
+      if (typeof detail.value === "string") {
+        detail.value = detail.value.split("T")[0];
+      }
+      for (const bound of ["min", "max"]) {
+        if (Number.isFinite(detail[bound])) {
+          detail[bound] = Math.floor(detail[bound] / DAY) * DAY;
+        }
+      }
+    }
     const requestId = `${winId}:${++nextRequestId}`;
     const payload = {
       winId,
@@ -74,6 +90,11 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
       max: Number.isFinite(detail.max) ? detail.max : null,
       step: Number.isFinite(detail.step) ? detail.step : null,
       stepBase: Number.isFinite(detail.stepBase) ? detail.stepBase : null,
+      dateTime: detail.dateTime,
+      type: data.type,
+      timeValue: detail.timeValue,
+      timeMin: Number.isFinite(detail.timeMin) ? detail.timeMin : null,
+      timeMax: Number.isFinite(detail.timeMax) ? detail.timeMax : null,
     };
     const actor = this;
     const listener = {
@@ -134,14 +155,26 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
 
   #finishEmbedPicker(response) {
     const detail = this.#pickerDetail;
-    const value =
-      response.accepted && this.#isValidDate(response, detail)
-        ? {
-            year: response.year,
-            month: response.month,
-            day: response.day,
-          }
-        : null;
+    let value = null;
+    if (
+      response.accepted &&
+      (detail.timeOnly || this.#isValidDate(response, detail))
+    ) {
+      value = detail.timeOnly
+        ? {}
+        : { year: response.year, month: response.month, day: response.day };
+      if (detail.timeOnly || detail.dateTime) {
+        if (this.#isValidTime(response, detail)) {
+          Object.assign(value, {
+            hour: response.hour,
+            minute: response.minute,
+            ...this.#seconds(response),
+          });
+        } else {
+          value = null;
+        }
+      }
+    }
 
     if (response.accepted && !value) {
       console.warn("Ignoring invalid Sailfish date picker response");
@@ -190,11 +223,57 @@ export class DateTimePickerParent extends GeckoDateTimePickerParent {
 
     if (Number.isFinite(detail.step) && detail.step > 0) {
       const stepBase = Number.isFinite(detail.stepBase) ? detail.stepBase : 0;
-      if ((value - stepBase) % detail.step !== 0) {
+      // A datetime day is selectable if any time within it matches the step.
+      const lastStep =
+        Math.floor((value + DAY - 1 - stepBase) / detail.step) * detail.step +
+        stepBase;
+      if (
+        detail.dateTime ? lastStep < value : (value - stepBase) % detail.step !== 0
+      ) {
         return false;
       }
     }
     return true;
+  }
+
+  #seconds(value) {
+    return { second: value.second ?? 0, millisecond: value.millisecond ?? 0 };
+  }
+
+  #isValidTime(response, detail) {
+    const { hour, minute } = response;
+    if (
+      !Number.isInteger(hour) || !Number.isInteger(minute) ||
+      hour < 0 || hour > 23 || minute < 0 || minute > 59
+    ) {
+      return false;
+    }
+    const { second, millisecond } = this.#seconds(response);
+    if (
+      !Number.isInteger(second) || !Number.isInteger(millisecond) ||
+      second < 0 || second > 59 || millisecond < 0 || millisecond > 999
+    ) {
+      return false;
+    }
+    let value = hour * 3600000 + minute * 60000 + second * 1000 + millisecond;
+    if (detail.dateTime) {
+      const date = new Date(0);
+      date.setUTCFullYear(response.year, response.month - 1, response.day);
+      date.setUTCHours(0, 0, 0, 0);
+      value += date.getTime();
+    }
+    const min = detail.timeMin;
+    const max = detail.timeMax;
+    const below = Number.isFinite(min) && value < min;
+    const above = Number.isFinite(max) && value > max;
+    if (detail.timeOnly && min > max ? below && above : below || above) {
+      return false;
+    }
+    const base = Number.isFinite(detail.stepBase) ? detail.stepBase : 0;
+    return (
+      !Number.isFinite(detail.step) || detail.step <= 0 ||
+      (value - base) % detail.step === 0
+    );
   }
 
   #cleanupEmbedPicker() {

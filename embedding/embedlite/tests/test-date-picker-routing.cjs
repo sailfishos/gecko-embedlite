@@ -176,11 +176,19 @@ assert.deepEqual(requests[3], {
 const timeActor = new scope.DateTimePickerParent();
 const timeRequest = { type: "time", detail: {} };
 timeActor.showPicker(timeRequest);
-assert.equal(timeActor.fallbackPicker, timeRequest);
+assert.equal(timeActor.fallbackPicker, undefined);
+assert.equal(requests.at(-1).data.type, "time");
+listener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+  winId: 42, id: requests.at(-1).data.id, accepted: true, hour: 14, minute: 30,
+}));
+assert.deepEqual(JSON.parse(JSON.stringify(timeActor.messages[0])), {
+  name: "InputPicker:ValueChanged",
+  data: { hour: 14, minute: 30, second: 0, millisecond: 0 },
+});
 
 // Switching backend must tear down the previous picker and route Close to
 // the current one, even if a stale native reply arrives afterwards.
-for (const type of ["time", "datetime-local"]) {
+for (const type of ["month"]) {
   const switching = new scope.DateTimePickerParent();
   switching.showPicker({ type: "date", detail: {} });
   const staleListener = listener;
@@ -204,4 +212,92 @@ for (const type of ["time", "datetime-local"]) {
   switching.didDestroy();
   assert.equal(listener, null);
 }
-console.log("Date picker routing and backend switching tests passed");
+
+for (const [day, accepted] of [[17, true], [18, false], [19, true], [20, false]]) {
+  const datetime = new scope.DateTimePickerParent();
+  const detail = {
+    value: "2026-09-17T12:00",
+    min: dateValue + 12 * 3600000,
+    max: dateValue + 2 * DAY + 18 * 3600000,
+    step: 2 * DAY,
+    stepBase: dateValue + 12 * 3600000,
+  };
+  datetime.showPicker({ type: "datetime-local", detail });
+  assert.equal(datetime.fallbackPicker, undefined, "Datetime uses native calendar");
+  const request = requests.at(-1).data;
+  assert.equal(request.value, "2026-09-17");
+  assert.equal(request.dateTime, true);
+  assert.equal(request.min, dateValue, "A midday minimum includes its day");
+  assert.equal(request.max, dateValue + 2 * DAY, "Maximum includes its day");
+  assert.equal(detail.min, dateValue + 12 * 3600000, "Caller detail is unchanged");
+  listener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+    winId: 42, id: request.id, accepted: true, year: 2026, month: 9, day,
+    hour: 12, minute: 0,
+  }));
+  assert.equal(datetime.messages.length, accepted ? 2 : 1);
+  if (accepted) {
+    assert.deepEqual(JSON.parse(JSON.stringify(datetime.messages[0])), {
+      name: "InputPicker:ValueChanged",
+      data: { year: 2026, month: 9, day, hour: 12, minute: 0, second: 0, millisecond: 0 },
+    }, "Date and time are committed together");
+  }
+  assert.equal(datetime.messages.at(-1).name, "InputPicker:Closed");
+  assert.equal(listener, null);
+}
+
+for (const step of [60000, 37 * 60000, NaN]) {
+  const datetime = new scope.DateTimePickerParent();
+  datetime.showPicker({
+    type: "datetime-local", detail: { step, stepBase: dateValue + 123456 },
+  });
+  const request = requests.at(-1).data;
+  listener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+    winId: 42, id: request.id, accepted: true, year: 2026, month: 9, day: 17,
+    hour: 0, minute: 2, second: 3, millisecond: 456,
+  }));
+  assert.equal(datetime.messages[0].name, "InputPicker:ValueChanged");
+}
+
+for (const type of ["date", "time", "datetime-local"]) {
+  const switching = new scope.DateTimePickerParent();
+  switching.showPicker({ type, detail: {} });
+  const previous = requests.at(-1).data;
+  const previousListener = listener;
+  switching.showPicker({ type: type === "date" ? "datetime-local" : "date" });
+  assert.equal(requests.at(-2).name, "embed:datepickerabort");
+  assert.equal(requests.at(-2).data.id, previous.id);
+  previousListener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+    ...previous, accepted: true, year: 2026, month: 9, day: 17,
+  }));
+  assert.equal(switching.messages.length, 0);
+  switching.receiveMessage({ name: "InputPicker:Close" });
+  assert.equal(listener, null);
+  assert.equal(requests.at(-1).name, "embed:datepickerabort");
+}
+for (const [detail, response, accepted] of [
+  [{ min: 9 * 3600000, max: 17 * 3600000 }, { hour: 8, minute: 59 }, false],
+  [{ min: 9 * 3600000, max: 17 * 3600000 }, { hour: 17, minute: 0 }, true],
+  [{ min: 22 * 3600000, max: 2 * 3600000 }, { hour: 23, minute: 30 }, true],
+  [{ min: 22 * 3600000, max: 2 * 3600000 }, { hour: 12, minute: 0 }, false],
+  [{ step: 900000 }, { hour: 12, minute: 16 }, false],
+  [{ step: 1 }, { hour: 12, minute: 34, second: 56, millisecond: 789 }, true],
+  [{}, { hour: 24, minute: 0 }, false],
+  [{}, { hour: 12, minute: 60 }, false],
+  [{}, { hour: 12, minute: 0, second: 60 }, false],
+  [{}, { hour: 12, minute: 0, millisecond: -1 }, false],
+]) {
+  const time = new scope.DateTimePickerParent();
+  time.showPicker({ type: "time", detail });
+  listener.onMessageReceived("embedui:datepickerresponse", JSON.stringify({
+    winId: 42, id: requests.at(-1).data.id, accepted: true, ...response,
+  }));
+  assert.equal(time.messages.length, accepted ? 2 : 1);
+  if (accepted) {
+    assert.deepEqual(JSON.parse(JSON.stringify(time.messages[0].data)), {
+      second: 0, millisecond: 0, ...response,
+    });
+  }
+  assert.equal(time.messages.at(-1).name, "InputPicker:Closed");
+  assert.equal(listener, null);
+}
+console.log("Native date/time/datetime constraints, routing and lifecycle tests passed");

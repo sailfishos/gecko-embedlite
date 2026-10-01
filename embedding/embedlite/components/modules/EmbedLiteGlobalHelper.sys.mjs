@@ -22,6 +22,7 @@ ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");
 // Use the same EmbedLite request/response bridge as the other native pickers.
 // ActorManagerParent registers the generic Gecko date picker first, so replace
 // that registration before content documents can request one.
+Services.prefs.getDefaultBranch("").setBoolPref("dom.forms.datetime.timepicker", true);
 ChromeUtils.unregisterWindowActor("DateTimePicker");
 ChromeUtils.registerWindowActor("DateTimePicker", {
   parent: {
