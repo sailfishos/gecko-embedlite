@@ -30,7 +30,8 @@ ChromeUtils.registerWindowActor("DateTimePicker", {
       "resource://embedlite-components/EmbedLiteDateTimePickerParent.sys.mjs",
   },
   child: {
-    esModuleURI: "moz-src:///toolkit/actors/DateTimePickerChild.sys.mjs",
+    esModuleURI:
+      "resource://embedlite-components/EmbedLiteDateTimePickerChild.sys.mjs",
     events: {
       MozOpenDateTimePicker: {},
       MozCloseDateTimePicker: {},

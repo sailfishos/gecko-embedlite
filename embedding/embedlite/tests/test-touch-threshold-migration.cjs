@@ -15,6 +15,7 @@ const threshold = "apz.touch_start_tolerance";
 
 function startProfile(defaultValue, savedPrefs) {
   const prefs = new Map(savedPrefs);
+  const defaults = new Map();
   let persisted = new Map(savedPrefs);
   let saves = 0;
   const observers = new Map();
@@ -32,12 +33,13 @@ function startProfile(defaultValue, savedPrefs) {
       obs: { addObserver(observer, topic) { observers.set(topic, observer); } },
       prefs: {
         getDefaultBranch() {
-          return { getStringPref(key, fallback) {
+          return { setBoolPref(key, value) { defaults.set(key, value); },
+            getStringPref(key, fallback) {
             assert.equal(key, threshold);
             return defaultValue ?? fallback;
           } };
         },
-        getBoolPref(key, fallback) { return prefs.get(key) ?? fallback; },
+        getBoolPref(key, fallback) { return prefs.get(key) ?? defaults.get(key) ?? fallback; },
         clearUserPref(key) { prefs.delete(key); },
         setBoolPref(key, value) { prefs.set(key, value); },
         savePrefFile(file) {
@@ -50,6 +52,7 @@ function startProfile(defaultValue, savedPrefs) {
   };
   vm.createContext(scope);
   vm.runInContext(source + "\nglobalThis.helper = EmbedLiteGlobalHelper.prototype;", scope);
+  assert.equal(defaults.get("dom.forms.datetime.timepicker"), true);
   scope.helper.observe(null, "app-startup", null);
   assert.equal(prefs.get(threshold), new Map(savedPrefs).get(threshold),
     "Do not migrate until profile preferences have loaded");
