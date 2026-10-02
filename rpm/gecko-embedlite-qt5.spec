@@ -437,8 +437,11 @@ echo "export CXXFLAGS=\"\$CXXFLAGS -Wno-psabi -Wno-attributes \"" >> "$MOZCONFIG
 # llvm-readelf maps the whole libxul.so and can run out of memory under the
 # devel SDK/qemu when debug info is enabled. GNU readelf streams this check.
 echo "export READELF=readelf" >> "$MOZCONFIG"
+# Keep build-tree symbols, but strip the packaged runtime. Profiling otherwise
+# defaults to --strip-debug, which retains the large local symbol table.
 echo "ac_add_options --disable-strip" >> "$MOZCONFIG"
-echo "ac_add_options --disable-install-strip" >> "$MOZCONFIG"
+echo "ac_add_options --enable-install-strip" >> "$MOZCONFIG"
+echo 'export STRIP_FLAGS="--strip-unneeded"' >> "$MOZCONFIG"
 # The elfhack self-test executes target binaries through qemu during the
 # aarch64 devel SDK build and currently crashes after libxul links.
 echo "ac_add_options --disable-elf-hack" >> "$MOZCONFIG"
