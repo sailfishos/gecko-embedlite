@@ -1,0 +1,154 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Mon, 5 Oct 2026 18:15:51 +0200
+Subject: sailfishos: Fix external protocol permissions and fallback retries
+
+Route standard external schemes through the embedder as well. Ignore
+scheme-wide intent grants and disable remembering intent dispatches.
+
+Carry user activation into the chooser and scope fallback suppression to
+the fallback navigation chain, allowing explicit retries and independent
+navigation while retaining redirect-loop protection.
+---
+ .../handling/ContentDispatchChooser.sys.mjs   | 43 +++++++++++++------
+ .../exthandler/nsExternalHelperAppService.cpp |  2 +-
+ .../exthandler/nsIContentDispatchChooser.idl  |  7 ++-
+ 3 files changed, 35 insertions(+), 17 deletions(-)
+
+diff --git a/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs b/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
+index 90ce2ed5297e..0c1737beff56 100644
+--- a/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
++++ b/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
+@@ -50,17 +50,21 @@ export class nsContentDispatchChooser {
+    * @param {BrowsingContext} [aBrowsingContext] - Context of the load.
+    * @param {bool} [aTriggeredExternally] - Whether the load came from outside
+    * this application.
++   * @param {bool} [aHasValidUserGestureActivation] - Whether the navigation
++   * carries a valid user gesture.
+    */
+   async handleURI(
+     aHandler,
+     aURI,
+     aPrincipal,
+     aBrowsingContext,
+-    aTriggeredExternally = false
++    aTriggeredExternally = false,
++    aHasValidUserGestureActivation = false
+   ) {
+-    if (AppConstants.MOZ_WIDGET_TOOLKIT === "qt" &&
+-        !E10SUtils.STANDARD_SAFE_PROTOCOLS.includes(aURI.scheme)) {
+-      await this._handleSailfishExternalApp(aURI, aPrincipal, aBrowsingContext);
++    if (AppConstants.MOZ_WIDGET_TOOLKIT === "qt") {
++      await this._handleSailfishExternalApp(
++        aURI, aPrincipal, aBrowsingContext, aHasValidUserGestureActivation
++      );
+       return;
+     }
+ 
+@@ -140,14 +144,26 @@ export class nsContentDispatchChooser {
+     aHandler.launchWithURI(aURI, aBrowsingContext);
+   }
+ 
+-  async _handleSailfishExternalApp(uri, principal, context) {
++  async _handleSailfishExternalApp(uri, principal, context, userGesture) {
+     if (!context || context.isDiscarded || !principal) return;
+     const sourceWindow = context.currentWindowGlobal;
+     if (!sourceWindow) return;
+     const url = uri.spec;
+     const pending = sailfishRequests.get(context);
+     if (pending?.url === url && pending.window === sourceWindow) return;
+-    if (sailfishFallbacks.get(context)?.has(url)) return;
++    const fallbackChain = sailfishFallbacks.get(context);
++    if (fallbackChain) {
++      const inFallback = sourceWindow === fallbackChain.window ||
++        sourceWindow.documentURI?.spec === fallbackChain.target ||
++        sourceWindow.documentChannel?.originalURI?.spec === fallbackChain.target;
++      if (userGesture || !inFallback) {
++        sailfishFallbacks.delete(context);
++      } else if (fallbackChain.urls.has(url)) {
++        return;
++      }
++    }
++    const canUsePermission = uri.scheme !== "intent" && this._isSupportedPrincipal(principal);
++    const canRemember = canUsePermission && !context.usePrivateBrowsing;
+ 
+     const embedService = Cc["@mozilla.org/embedlite-app-service;1"].getService(
+       Ci.nsIEmbedAppService
+@@ -168,7 +184,8 @@ export class nsContentDispatchChooser {
+     const payload = {
+       winId, id, url, host: this._displayPrePath(principal),
+       privateBrowsing: !!context.usePrivateBrowsing,
+-      permissionAllowed: this._isSupportedPrincipal(principal) &&
++      canRemember,
++      permissionAllowed: canUsePermission &&
+         Services.perms.testPermissionFromPrincipal(principal,
+           this._getSkipProtoDialogPermissionKey(uri.scheme)) === Services.perms.ALLOW_ACTION,
+     };
+@@ -201,8 +218,7 @@ export class nsContentDispatchChooser {
+     });
+     if (!current()) return;
+     sailfishRequests.delete(context);
+-    if (result.outcome === "dispatched" && result.remember &&
+-        !context.usePrivateBrowsing && this._isSupportedPrincipal(principal)) {
++    if (result.outcome === "dispatched" && result.remember && canRemember) {
+       this._updatePermission(principal, uri.scheme, true);
+     }
+     if (result.outcome !== "fallback" || !result.fallback) return;
+@@ -210,12 +226,11 @@ export class nsContentDispatchChooser {
+     try { fallback = Services.io.newURI(result.fallback); } catch (error) { return; }
+     if (!fallback.schemeIs("http") && !fallback.schemeIs("https")) return;
+     if (!fallback.host || fallback.userPass) return;
+-    let visited = sailfishFallbacks.get(context);
+-    if (!visited) {
+-      visited = new Set();
+-      sailfishFallbacks.set(context, visited);
+-    }
++    const visited = sailfishFallbacks.get(context)?.urls || new Set();
+     visited.add(url);
++    sailfishFallbacks.set(context, {
++      urls: visited, window: sourceWindow, target: fallback.spec,
++    });
+     context.loadURI(fallback.spec, { triggeringPrincipal: principal });
+   }
+ 
+diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
+index 1eab40145589..a40d02608ec3 100644
+--- a/uriloader/exthandler/nsExternalHelperAppService.cpp
++++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
+@@ -1168,7 +1168,7 @@ nsExternalHelperAppService::LoadURI(nsIURI* aURI,
+   return chooser->HandleURI(
+       handler, escapedURI,
+       aRedirectPrincipal ? aRedirectPrincipal : aTriggeringPrincipal,
+-      aBrowsingContext, aTriggeredExternally);
++      aBrowsingContext, aTriggeredExternally, aHasValidUserGestureActivation);
+ }
+ 
+ //////////////////////////////////////////////////////////////////////////////////////////////////////
+diff --git a/uriloader/exthandler/nsIContentDispatchChooser.idl b/uriloader/exthandler/nsIContentDispatchChooser.idl
+index c0130038d46d..566239b21a16 100644
+--- a/uriloader/exthandler/nsIContentDispatchChooser.idl
++++ b/uriloader/exthandler/nsIContentDispatchChooser.idl
+@@ -13,7 +13,7 @@ webidl BrowsingContext;
+  * This is used to ask a user what they would like to do with a given piece of
+  * content.
+  */
+-[scriptable, uuid(456ca3b2-02be-4f97-89a2-08c08d3ad88f)]
++[scriptable, uuid(9f9135ac-1fe0-4588-aa65-5ece43016344)]
+ interface nsIContentDispatchChooser : nsISupports {
+  /**
+   * Opens the handler associated with the given resource.
+@@ -31,10 +31,13 @@ interface nsIContentDispatchChooser : nsISupports {
+   *        The browsing context where the load should happen.
+   * @param aWasTriggeredExternally
+   *        True if the load was tripped by an external app.
++  * @param aHasValidUserGestureActivation
++  *        True if this navigation carries a valid user gesture.
+   */
+   void handleURI(in nsIHandlerInfo aHandler,
+            in nsIURI aURI,
+            in nsIPrincipal aTriggeringPrincipal,
+            in BrowsingContext aBrowsingContext,
+-           [optional] in boolean aWasTriggeredExternally);
++           [optional] in boolean aWasTriggeredExternally,
++           [optional] in boolean aHasValidUserGestureActivation);
+ };

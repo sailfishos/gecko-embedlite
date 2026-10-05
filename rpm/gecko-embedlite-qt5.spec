@@ -142,6 +142,7 @@ Patch82:    0082-sailfishos-Suspend-hidden-video-while-retaining-background-audi
 Patch83:    0083-sailfishos-Notify-embedders-when-the-main-media-controller-changes.patch
 Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.patch
 Patch85:    0085-sailfishos-Delegate-external-URLs-to-the-asynchronous.patch
+Patch86:    0086-sailfishos-Fix-external-protocol-permissions-and-fallback-retries.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0
