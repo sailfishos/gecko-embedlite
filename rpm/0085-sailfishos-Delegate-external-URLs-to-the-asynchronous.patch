@@ -1,0 +1,175 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Mon, 5 Oct 2026 13:05:02 +0200
+Subject: sailfishos: Delegate external URLs to the asynchronous embedder
+ chooser
+
+Port JB#64240 handler selection to the hosted ESR153 message path. Let the
+embedder query Lipstick with the complete URL and apply full Browser or
+Sparse confirmation policy. Preserve the triggering context for validated
+intent fallbacks and cancel stale or duplicate requests.
+---
+ .../handling/ContentDispatchChooser.sys.mjs   | 101 ++++++++++++++++++
+ .../exthandler/nsExternalProtocolHandler.cpp  |   4 +
+ .../exthandler/unix/nsOSHelperAppService.cpp  |   4 +
+ 3 files changed, 109 insertions(+)
+
+diff --git a/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs b/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
+index 21be36db7f43..90ce2ed5297e 100644
+--- a/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
++++ b/toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
+@@ -7,6 +7,12 @@
+ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
+ 
+ import { E10SUtils } from "resource://gre/modules/E10SUtils.sys.mjs";
++import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
++import { clearTimeout, setTimeout } from "resource://gre/modules/Timer.sys.mjs";
++
++let nextSailfishRequest = 0;
++const sailfishRequests = new WeakMap();
++const sailfishFallbacks = new WeakMap();
+ 
+ const DIALOG_URL_APP_CHOOSER =
+   "chrome://mozapps/content/handling/appChooser.xhtml";
+@@ -52,6 +58,12 @@ export class nsContentDispatchChooser {
+     aBrowsingContext,
+     aTriggeredExternally = false
+   ) {
++    if (AppConstants.MOZ_WIDGET_TOOLKIT === "qt" &&
++        !E10SUtils.STANDARD_SAFE_PROTOCOLS.includes(aURI.scheme)) {
++      await this._handleSailfishExternalApp(aURI, aPrincipal, aBrowsingContext);
++      return;
++    }
++
+     const isStandardProtocol = E10SUtils.STANDARD_SAFE_PROTOCOLS.includes(
+       aURI.scheme
+     );
+@@ -128,6 +140,95 @@ export class nsContentDispatchChooser {
+     aHandler.launchWithURI(aURI, aBrowsingContext);
+   }
+ 
++  async _handleSailfishExternalApp(uri, principal, context) {
++    if (!context || context.isDiscarded || !principal) return;
++    const sourceWindow = context.currentWindowGlobal;
++    if (!sourceWindow) return;
++    const url = uri.spec;
++    const pending = sailfishRequests.get(context);
++    if (pending?.url === url && pending.window === sourceWindow) return;
++    if (sailfishFallbacks.get(context)?.has(url)) return;
++
++    const embedService = Cc["@mozilla.org/embedlite-app-service;1"].getService(
++      Ci.nsIEmbedAppService
++    );
++    let winId;
++    try {
++      winId = embedService.getIDByBrowsingContext(context);
++    } catch (error) {
++      return;
++    }
++    if (!winId) return;
++    const id = String(++nextSailfishRequest);
++    const request = { url, window: sourceWindow, id };
++    sailfishRequests.set(context, request);
++    const current = () => !context.isDiscarded &&
++      context.currentWindowGlobal === sourceWindow &&
++      sailfishRequests.get(context) === request;
++    const payload = {
++      winId, id, url, host: this._displayPrePath(principal),
++      privateBrowsing: !!context.usePrivateBrowsing,
++      permissionAllowed: this._isSupportedPrincipal(principal) &&
++        Services.perms.testPermissionFromPrincipal(principal,
++          this._getSkipProtoDialogPermissionKey(uri.scheme)) === Services.perms.ALLOW_ACTION,
++    };
++    const result = await new Promise(resolve => {
++      let finished = false;
++      let timer;
++      const listener = {
++        QueryInterface: ChromeUtils.generateQI(["nsIEmbedMessageListener"]),
++        onMessageReceived(name, message) {
++          let response;
++          try { response = JSON.parse(message); } catch (error) { return; }
++          if (String(response.id) !== id || response.winId !== winId) return;
++          finish(response);
++        },
++      };
++      function finish(response) {
++        if (finished) return;
++        finished = true;
++        clearTimeout(timer);
++        embedService.removeMessageListener("externalurlresponse", listener);
++        resolve(response);
++      }
++      embedService.addMessageListener("externalurlresponse", listener);
++      timer = setTimeout(() => finish({ outcome: "cancelled" }), 120000);
++      try {
++        embedService.sendAsyncMessage(winId, "embed:externalurl", JSON.stringify(payload));
++      } catch (error) {
++        finish({ outcome: "cancelled" });
++      }
++    });
++    if (!current()) return;
++    sailfishRequests.delete(context);
++    if (result.outcome === "dispatched" && result.remember &&
++        !context.usePrivateBrowsing && this._isSupportedPrincipal(principal)) {
++      this._updatePermission(principal, uri.scheme, true);
++    }
++    if (result.outcome !== "fallback" || !result.fallback) return;
++    let fallback;
++    try { fallback = Services.io.newURI(result.fallback); } catch (error) { return; }
++    if (!fallback.schemeIs("http") && !fallback.schemeIs("https")) return;
++    if (!fallback.host || fallback.userPass) return;
++    let visited = sailfishFallbacks.get(context);
++    if (!visited) {
++      visited = new Set();
++      sailfishFallbacks.set(context, visited);
++    }
++    visited.add(url);
++    context.loadURI(fallback.spec, { triggeringPrincipal: principal });
++  }
++
++  _displayPrePath(principal) {
++    try {
++      return principal.isNullPrincipal
++        ? principal.precursorPrincipal?.exposablePrePath || ""
++        : principal.exposablePrePath;
++    } catch (error) {
++      return "";
++    }
++  }
++
+   /**
+    * Get the name of the application set to handle the the protocol.
+    *
+diff --git a/uriloader/exthandler/nsExternalProtocolHandler.cpp b/uriloader/exthandler/nsExternalProtocolHandler.cpp
+index 5d77ca6ba57c..a1dc4c8e2ac9 100644
+--- a/uriloader/exthandler/nsExternalProtocolHandler.cpp
++++ b/uriloader/exthandler/nsExternalProtocolHandler.cpp
+@@ -158,9 +158,13 @@ nsresult nsExtProtocolChannel::OpenURL() {
+     bool haveHandler = false;
+     extProtService->ExternalProtocolHandlerExists(urlScheme.get(),
+                                                   &haveHandler);
++#ifndef MOZ_WIDGET_QT
+     if (!haveHandler) {
+       return NS_ERROR_UNKNOWN_PROTOCOL;
+     }
++#endif
++    // Qt delegates full-URL availability checks to the asynchronous embedder
++    // chooser. Scheme-only checks cannot see host/package-specific handlers.
+ 
+     RefPtr<mozilla::dom::BrowsingContext> ctx;
+     rv = mLoadInfo->GetTargetBrowsingContext(getter_AddRefs(ctx));
+diff --git a/uriloader/exthandler/unix/nsOSHelperAppService.cpp b/uriloader/exthandler/unix/nsOSHelperAppService.cpp
+index ef52174f7cf2..7f73e907216a 100644
+--- a/uriloader/exthandler/unix/nsOSHelperAppService.cpp
++++ b/uriloader/exthandler/unix/nsOSHelperAppService.cpp
+@@ -1104,6 +1104,10 @@ nsresult nsOSHelperAppService::OSProtocolHandlerExists(
+ #ifdef MOZ_WIDGET_GTK
+     // Check the GNOME registry for a protocol handler
+     *aHandlerExists = nsGNOMERegistry::HandlerExists(aProtocolScheme);
++#elif defined(MOZ_WIDGET_QT)
++    // Availability depends on the complete URL and is queried asynchronously
++    // by the Qt embedder after the external-protocol security checks.
++    *aHandlerExists = false;
+ #elif defined(MOZ_ENABLE_CONTENTACTION)
+     // libcontentaction expects a URI, not a bare scheme.
+     const QString uri =
