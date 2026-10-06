@@ -213,6 +213,12 @@
     });
     reportOrientation();
   }, true);
+  // BFCache restoration can revive a context with an older text scale.
+  addEventListener("pageshow", event => {
+    if (event.target === content.document) {
+      state();
+    }
+  }, true);
   addEventListener("pagehide", event => {
     for (const [popupId, popup] of blockedPopups) {
       if (popup.requestingDocument === event.target) {

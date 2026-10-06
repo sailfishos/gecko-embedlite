@@ -42,6 +42,8 @@
   const MAX_CONTENT_DATA_LENGTH = 1024 * 1024;
   const listeners = new WeakMap();
   const loadedFrameScripts = new WeakMap();
+  // Keep the host setting across frame-loader and cached context replacement.
+  const textZooms = new WeakMap();
   const frameScripts = new Set();
   const messageNames = new Set();
 
@@ -109,6 +111,14 @@
     }
   }
 
+  function applyTextZoom(browser) {
+    const zoom = textZooms.get(browser);
+    const context = browser.browsingContext;
+    if (zoom !== undefined && context && context.textZoom !== zoom) {
+      context.textZoom = zoom;
+    }
+  }
+
   function contentMessageManager(browser) {
     return browser.messageManager || browser.frameLoader?.messageManager || null;
   }
@@ -129,6 +139,7 @@
     }
     const listener = message => {
       if (name === INTERNAL_STATE) {
+        applyTextZoom(browser);
         emit(browser, "EmbedLiteChromeContentState", name, message.data);
       } else {
         // SelectionHandler uses sync delivery as ordering, not for its
@@ -174,6 +185,7 @@
   }
 
   function attach(browser) {
+    applyTextZoom(browser);
     frameBridge.attachFrameBridge(browser, (name, data) =>
       emit(browser, "EmbedLiteChromeContentMessage", name, data));
     if (!contentMessageManager(browser)) {
@@ -261,6 +273,12 @@
           removeMessageListener(browser, name);
           break;
         case "send-message": {
+          if (name === "embedui:textZoom") {
+            const zoom = Number(JSON.parse(data)?.zoom);
+            textZooms.set(browser, Number.isFinite(zoom) && zoom > 0 ? zoom : 1.0);
+            applyTextZoom(browser);
+            break;
+          }
           if (name === "embedui:find") {
             findInPage(browser, JSON.parse(data), result => {
               if (messageNames.has("embed:find")) {
