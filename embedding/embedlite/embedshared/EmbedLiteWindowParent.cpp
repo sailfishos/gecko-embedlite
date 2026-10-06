@@ -354,7 +354,12 @@ void EmbedLiteWindowParent::SetTabListener(
 void EmbedLiteWindowParent::SetContentListener(
     EmbedLiteChromeContentSessionListener* aListener)
 {
+  RefPtr<EmbedLiteWindowParent> self(this);
   mChromeContentSessionListener = aListener;
+  if (aListener && CanSendChromeSessionCommand()) {
+    mHostedWindow->SendMediaStates();
+  }
+  if (mDestroying || mChromeContentSessionListener != aListener) return;
   if (aListener && mHasContentState && CanSendChromeSessionCommand()) {
     const auto& state = mContentState;
     aListener->OnContentStateChanged(EmbedLiteChromeContentState{
@@ -513,6 +518,27 @@ bool EmbedLiteWindowParent::SetThrottlePainting(uint64_t aTabId, bool aValue)
   }
   mHostedWindow->SetContentThrottlePainting(aTabId, aValue);
   return true;
+}
+
+bool EmbedLiteWindowParent::SetBackgroundMediaEnabled(bool aEnabled)
+{
+  return CanSendChromeSessionCommand() &&
+    mHostedWindow->SetBackgroundMediaEnabled(aEnabled);
+}
+bool EmbedLiteWindowParent::MediaCommand(uint64_t aTabId,
+    uint64_t aControllerToken, uint64_t aTrackToken,
+    EmbedLiteMediaCommand aCommand, double aPosition)
+{
+  return CanSendChromeSessionCommand() && CanTargetContentTab(aTabId) &&
+    mHostedWindow->MediaCommand(aTabId, aControllerToken, aTrackToken,
+                               aCommand, aPosition);
+}
+void EmbedLiteWindowParent::OnMediaStateChanged(const EmbedLiteMediaState& aState)
+{
+  RefPtr<EmbedLiteWindowParent> self(this);
+  if (mChromeContentSessionListener && !mDestroying) {
+    mChromeContentSessionListener->OnMediaStateChanged(aState);
+  }
 }
 
 bool EmbedLiteWindowParent::SuspendTimeouts(uint64_t aTabId)
@@ -887,7 +913,7 @@ void EmbedLiteWindowParent::ReplayTabSnapshot()
       tab.id(), tab.openerId(), tab.persistentId(), tab.locationRevision(),
       tab.location().get(), tab.title().get(), tab.loading(), tab.closing(),
       tab.discarded(), tab.canGoBack(), tab.canGoForward(), tab.progress(),
-      tab.current(), tab.total()});
+      tab.current(), tab.total(), tab.mediaPlaying()});
   }
   mChromeTabSessionListener->OnTabsChanged(
     mTabSnapshot.revision(), mTabSnapshot.selectedTabId(), tabs.Elements(),

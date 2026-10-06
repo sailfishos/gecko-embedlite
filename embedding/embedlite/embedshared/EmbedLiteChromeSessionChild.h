@@ -17,6 +17,7 @@
 #include "nsWeakReference.h"
 #include "mozilla/UniquePtr.h"
 #include "EmbedLiteChromeContentRegistrations.h"
+#include "EmbedLiteChromeContentSession.h"
 
 class nsIAppWindow;
 class nsIBrowserDOMWindow;
@@ -35,6 +36,7 @@ class BrowsingContext;
 class CanonicalBrowsingContext;
 class Element;
 class Promise;
+class MediaController;
 } // namespace dom
 
 namespace embedlite {
@@ -101,6 +103,9 @@ public:
   bool SetDesktopMode(uint64_t, bool);
   bool SetJavascriptEnabled(bool);
   bool SetThrottlePainting(uint64_t, bool);
+  bool SetBackgroundMediaEnabled(bool);
+  bool MediaCommand(uint64_t, uint64_t, uint64_t, EmbedLiteMediaCommand, double);
+  void SendMediaStates();
   bool SuspendTimeouts(uint64_t);
   bool ResumeTimeouts(uint64_t);
   bool SetHttpUserAgent(uint64_t, const nsAString&);
@@ -160,6 +165,12 @@ private:
     int32_t dynamicToolbarHeight;
     bool hasHttpUserAgent;
     bool hasDynamicToolbarHeight;
+    RefPtr<dom::MediaController> mediaController;
+    uint64_t controllerToken = 0;
+    uint64_t trackToken = 0;
+    bool mediaDocumentPending = false;
+    bool mediaPlaying = false;
+    bool mediaActive = false;
     bool timeoutsSuspended;
     bool throttlePainting;
     bool fullscreen;
@@ -259,6 +270,14 @@ private:
                                  bool aPermit);
   void CancelBeforeUnloadPrompts(uint64_t aTabId = 0);
   void RemoveObserver();
+  void BindMediaController(TabRecord&);
+  void DetachMediaController(TabRecord&);
+  void UpdateMediaState(TabRecord&, bool aMetadataChanged = false);
+  void SendMediaState(const TabRecord&);
+  void ScheduleMediaStates();
+  bool mMediaStatePending = false;
+  bool RetainMedia(const TabRecord&) const;
+  bool mBackgroundMediaEnabled = false;
 
   EmbedLiteHostedWindow* mWindow; // Not owned.
   nsIAppWindow* mAppWindow; // Not owned; mWindow owns it.

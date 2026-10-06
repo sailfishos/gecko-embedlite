@@ -16,6 +16,7 @@
 #include "nsAppRunner.h"
 #include "nsXULAppAPI.h"
 #include "nsString.h"
+#include "prenv.h"
 #include "mozilla/HelperMacros.h"
 #include "application.ini.h"
 #include "mozilla/LookAndFeel.h"

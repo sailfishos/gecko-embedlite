@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Tue, 6 Oct 2026 00:19:33 +0200
+Subject: JB#65442: Notify embedders when the main media controller changes
+
+---
+ dom/media/mediacontrol/MediaControlService.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/dom/media/mediacontrol/MediaControlService.cpp b/dom/media/mediacontrol/MediaControlService.cpp
+index efb0cdcc290c..ada1bee25f14 100644
+--- a/dom/media/mediacontrol/MediaControlService.cpp
++++ b/dom/media/mediacontrol/MediaControlService.cpp
+@@ -441,6 +441,12 @@ void MediaControlService::ControllerManager::UpdateMainControllerInternal(
+     ConnectMainControllerEvents();
+   }
+ 
++#ifdef MOZ_WIDGET_QT
++  if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
++    obs->NotifyObservers(nullptr, "embedlite-main-media-controller-changed", nullptr);
++  }
++#endif
++
+   if (StaticPrefs::media_mediacontrol_testingevents_enabled()) {
+     if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
+       obs->NotifyObservers(nullptr, "main-media-controller-changed", nullptr);

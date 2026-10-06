@@ -28,6 +28,7 @@
 #include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/dom/BrowserParent.h"
+#include "mozilla/dom/MediaController.h"
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ChildSHistory.h"
@@ -533,6 +534,8 @@ EmbedLiteChromeSessionChild::Start(
   mAppWindow = aAppWindow;
   mInitialContentURI = aInitialContentURI;
   mObservingWindowVisible = true;
+  MOZ_ALWAYS_SUCCEEDS(observerService->AddObserver(
+    this, "embedlite-main-media-controller-changed", true));
   nsCOMPtr<mozIDOMWindowProxy> chromeDOMWindow = do_GetInterface(mAppWindow);
   if (EmbedLiteAppService* service = EmbedLiteAppService::AppService()) {
     service->RegisterChromeWindow(
@@ -581,6 +584,7 @@ void EmbedLiteChromeSessionChild::AddBrowserEventListeners(TabRecord& aTab)
 
 void EmbedLiteChromeSessionChild::RemoveBrowserEventListeners(TabRecord& aTab)
 {
+  DetachMediaController(aTab);
   if (!aTab.browser) {
     return;
   }
@@ -685,7 +689,7 @@ void EmbedLiteChromeSessionChild::ReplayContentRegistrations(TabRecord& aTab)
     DispatchContentCommand(aTab, u"set-toolbar-height"_ns,
                            NS_ConvertUTF8toUTF16(json));
   }
-  if (aTab.timeoutsSuspended) {
+  if (aTab.timeoutsSuspended && !RetainMedia(aTab)) {
     DispatchContentCommand(aTab, u"suspend-timeouts"_ns, u"{}"_ns);
   }
 }
@@ -694,6 +698,11 @@ void EmbedLiteChromeSessionChild::BeginDocumentNavigation(TabRecord& aTab)
 {
   if (!++aTab.locationRevision) {
     ++aTab.locationRevision;
+  }
+  aTab.mediaDocumentPending = true;
+  if (aTab.mediaController) {
+    DetachMediaController(aTab);
+    BindMediaController(aTab);
   }
   aTab.securityStatus.Truncate();
   aTab.securityState = 0;
@@ -775,6 +784,9 @@ EmbedLiteChromeSessionChild::Shutdown()
   }
   mShuttingDown = true;
   RemoveObserver();
+  if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
+    obs->RemoveObserver(this, "embedlite-main-media-controller-changed");
+  }
   CancelBeforeUnloadPrompts();
 
   mFocused = false;
@@ -832,6 +844,10 @@ EmbedLiteChromeSessionChild::Observe(nsISupports* aSubject,
                                      const char16_t* aData)
 {
   (void) aData;
+  if (!std::strcmp(aTopic, "embedlite-main-media-controller-changed")) {
+    ScheduleMediaStates();
+    return NS_OK;
+  }
   if (!mAppWindow || std::strcmp(aTopic, "xul-window-visible")) {
     return NS_OK;
   }
@@ -1114,6 +1130,7 @@ nsresult EmbedLiteChromeSessionChild::RebindProgressListener(TabRecord& aTab)
   MOZ_ALWAYS_SUCCEEDS(
     context->Top()->SetAllowJavascript(mJavascriptEnabled));
 
+  BindMediaController(aTab);
   nsCOMPtr<nsIWebProgress> webProgress = browsingContext->GetWebProgress();
   NS_ENSURE_TRUE(webProgress, NS_ERROR_NOT_AVAILABLE);
   if (webProgress == aTab.webProgress &&
@@ -2008,7 +2025,8 @@ void EmbedLiteChromeSessionChild::ApplyTabActiveState(
   if (!aTab.browser || aTab.discarded) {
     return;
   }
-  const bool active = mReady && mActive && aSelected;
+  const bool presented = mReady && mActive && aSelected;
+  const bool active = presented || (mReady && RetainMedia(aTab));
   if (aSelected) {
     (void) aTab.browser->UnsetAttr(
       kNameSpaceID_None, nsGkAtoms::hidden, true);
@@ -2034,7 +2052,7 @@ void EmbedLiteChromeSessionChild::ApplyTabActiveState(
     return;
   }
   if (BrowserParent* browserParent = browsingContext->GetBrowserParent()) {
-    browserParent->SetRenderLayers(active && !aTab.throttlePainting);
+    browserParent->SetRenderLayers(presented && !aTab.throttlePainting);
   }
 }
 
@@ -2613,8 +2631,8 @@ bool EmbedLiteChromeSessionChild::SetThrottlePainting(
 bool EmbedLiteChromeSessionChild::SuspendTimeouts(uint64_t aTabId)
 {
   TabRecord* tab = FindTab(aTabId);
-  if (!tab || !DispatchContentCommand(
-        *tab, u"suspend-timeouts"_ns, u"{}"_ns)) {
+  if (!tab || (!RetainMedia(*tab) && !DispatchContentCommand(
+        *tab, u"suspend-timeouts"_ns, u"{}"_ns))) {
     return false;
   }
   tab->timeoutsSuspended = true;
@@ -3147,6 +3165,7 @@ void EmbedLiteChromeSessionChild::SendTabSnapshot()
     data.loading() = tab->loading;
     data.closing() = tab->closing;
     data.discarded() = tab->discarded;
+    data.mediaPlaying() = tab->mediaPlaying;
     data.canGoBack() = tab->canGoBack;
     data.canGoForward() = tab->canGoForward;
     data.progress() = tab->progress;
@@ -3235,6 +3254,17 @@ EmbedLiteChromeSessionChild::HandleEvent(Event* aEvent)
 {
   nsAutoString type;
   aEvent->GetType(type);
+  for (const auto& record : mTabs) {
+    if (record->mediaController &&
+        aEvent->GetCurrentTarget() == record->mediaController) {
+      if (type.EqualsLiteral("activated") ||
+          (type.EqualsLiteral("playbackstatechange") && record->mediaController->IsPlaying())) {
+        record->mediaDocumentPending = false;
+      }
+      UpdateMediaState(*record, type.EqualsLiteral("metadatachange"));
+      return NS_OK;
+    }
+  }
   Element* browser =
     Element::FromEventTargetOrNull(aEvent->GetCurrentTarget());
   if (mPrintBrowsers.Contains(browser)) {
@@ -3336,6 +3366,7 @@ EmbedLiteChromeSessionChild::HandleEvent(Event* aEvent)
     }
 
     aEvent->PreventDefault();
+    DetachMediaController(*tab);
     tab->crashed = true;
     tab->contentBridgeReady = false;
     tab->awaitingDocumentLocation = false;

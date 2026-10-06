@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Tue, 6 Oct 2026 08:49:51 +0200
+Subject: JB#65442: Propagate hosted rendering state to remote frames
+
+Keep remote iframe presentation inactive while hosted background media retains
+document activity. Inherit the parent rendering state when creating a remote
+frame and prevent child requests from enabling it while its parent is hidden.
+---
+ dom/ipc/BrowserBridgeParent.cpp | 7 +++++++
+ dom/ipc/BrowserParent.cpp       | 7 +++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/dom/ipc/BrowserBridgeParent.cpp b/dom/ipc/BrowserBridgeParent.cpp
+index 2c7d595aede8..f9c096139f1d 100644
+--- a/dom/ipc/BrowserBridgeParent.cpp
++++ b/dom/ipc/BrowserBridgeParent.cpp
+@@ -127,6 +127,9 @@ nsresult BrowserBridgeParent::InitWithProcess(
+   mBrowserParent->SetBrowserBridgeParent(this);
+   mBrowserParent->SetOwnerElement(aParentBrowser->GetOwnerElement());
+   mBrowserParent->InitRendering();
++#ifdef MOZ_WIDGET_QT
++  mBrowserParent->SetRenderLayers(aParentBrowser->GetRenderLayers());
++#endif
+ 
+   GetBrowsingContext()->SetCurrentBrowserParent(mBrowserParent);
+ 
+@@ -203,7 +206,11 @@ IPCResult BrowserBridgeParent::RecvUpdateRemotePrintSettings(
+ }
+ 
+ IPCResult BrowserBridgeParent::RecvRenderLayers(const bool& aEnabled) {
++#ifdef MOZ_WIDGET_QT
++  mBrowserParent->SetRenderLayers(aEnabled && Manager()->GetRenderLayers());
++#else
+   (void)mBrowserParent->SendRenderLayers(aEnabled);
++#endif
+   return IPC_OK();
+ }
+ 
+diff --git a/dom/ipc/BrowserParent.cpp b/dom/ipc/BrowserParent.cpp
+index c59d679441bf..b73ee62d35a5 100644
+--- a/dom/ipc/BrowserParent.cpp
++++ b/dom/ipc/BrowserParent.cpp
+@@ -3791,6 +3791,13 @@ void BrowserParent::SetRenderLayers(bool aEnabled) {
+ 
+ void BrowserParent::SetRenderLayersInternal(bool aEnabled) {
+   (void)SendRenderLayers(aEnabled);
++#ifdef MOZ_WIDGET_QT
++  VisitChildren([aEnabled](BrowserBridgeParent* aBridge) {
++    if (BrowserParent* child = aBridge->GetBrowserParent()) {
++      child->SetRenderLayers(aEnabled);
++    }
++  });
++#endif
+ 
+   // Ask the child to repaint/unload layers using the PHangMonitor
+   // channel/thread (which may be less congested).

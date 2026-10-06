@@ -138,6 +138,9 @@ Patch78:    0078-sailfishos-history-Use-Android-BFCache-sizing-on-Qt.patch
 Patch79:    0079-sailfishos-build-Version-the-EmbedLite-libxul-SONAM.patch
 Patch80:    0080-Keep-camera-frame-alive-while-wrapping-planar-buffer.patch
 Patch81:    0081-Restore-native-colour-scheme-fallback-for-ambience-m.patch
+Patch82:    0082-sailfishos-Suspend-hidden-video-while-retaining-background-audio.patch
+Patch83:    0083-sailfishos-Notify-embedders-when-the-main-media-controller-changes.patch
+Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0

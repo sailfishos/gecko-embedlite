@@ -1,0 +1,95 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Mon, 5 Oct 2026 23:23:55 +0200
+Subject: JB#65442: Suspend hidden video while retaining background audio
+
+Refresh media decoder visibility when the Qt presentation is inactive.
+
+Keep document activity separate so background audio can continue without
+rendering video. Reuse normal video suspension policy and its exemptions.
+---
+ dom/media/mediaelement/HTMLMediaElement.cpp | 18 ++++++++++++++++--
+ dom/media/mediaelement/HTMLMediaElement.h   |  2 ++
+ layout/base/PresShell.cpp                   | 12 ++++++++++++
+ 3 files changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/dom/media/mediaelement/HTMLMediaElement.cpp b/dom/media/mediaelement/HTMLMediaElement.cpp
+index 438295c8a84e..6ef28cd859b3 100644
+--- a/dom/media/mediaelement/HTMLMediaElement.cpp
++++ b/dom/media/mediaelement/HTMLMediaElement.cpp
+@@ -7317,6 +7317,12 @@ bool HTMLMediaElement::ShouldBeSuspendedByInactiveDocShell() const {
+   return bc && !bc->IsActive() && bc->Top()->GetSuspendMediaWhenInactive();
+ }
+ 
++void HTMLMediaElement::NotifyPresentationActivityChanged() {
++  if (mDecoder && !IsBeingDestroyed()) {
++    NotifyDecoderActivityChanges();
++  }
++}
++
+ void HTMLMediaElement::NotifyOwnerDocumentActivityChanged() {
+   if (mDecoder && !IsBeingDestroyed()) {
+     NotifyDecoderActivityChanges();
+@@ -8342,9 +8348,17 @@ void HTMLMediaElement::GetEMEInfo(dom::EMEDebugInfo& aInfo) {
+ 
+ void HTMLMediaElement::NotifyDecoderActivityChanges() const {
+   if (mDecoder) {
++    bool presentationHidden = false;
++#ifdef MOZ_WIDGET_QT
++    if (PresShell* presShell = OwnerDoc()->GetPresShell()) {
++      presentationHidden = !presShell->IsActive() &&
++                           !IsBeingUsedInPictureInPictureMode();
++    }
++#endif
+     mDecoder->NotifyOwnerActivityChanged(
+-        IsActuallyInvisible(), IsInComposedDoc(),
+-        OwnerDoc()->IsInBackgroundWindow(), HasPendingCallbacks());
++        IsActuallyInvisible() || presentationHidden, IsInComposedDoc(),
++        OwnerDoc()->IsInBackgroundWindow() || presentationHidden,
++        HasPendingCallbacks());
+   }
+ }
+ 
+diff --git a/dom/media/mediaelement/HTMLMediaElement.h b/dom/media/mediaelement/HTMLMediaElement.h
+index 74ec5b5edfb9..c2ecfa9415a8 100644
+--- a/dom/media/mediaelement/HTMLMediaElement.h
++++ b/dom/media/mediaelement/HTMLMediaElement.h
+@@ -318,6 +318,8 @@ class HTMLMediaElement : public nsGenericHTMLElement,
+    */
+   void NotifyOwnerDocumentActivityChanged();
+ 
++  void NotifyPresentationActivityChanged();
++
+   // Called when the media element enters or leaves the fullscreen.
+   void NotifyFullScreenChanged();
+ 
+diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
+index f5d4d0963ab8..4951c157b042 100644
+--- a/layout/base/PresShell.cpp
++++ b/layout/base/PresShell.cpp
+@@ -42,6 +42,9 @@
+ #include "mozilla/EventStateManager.h"
+ #include "mozilla/GeckoMVMContext.h"
+ #include "mozilla/GlobalStyleSheetCache.h"
++#ifdef MOZ_WIDGET_QT
++#include "mozilla/dom/HTMLMediaElement.h"
++#endif
+ #include "mozilla/IMEStateManager.h"
+ #include "mozilla/InputTaskManager.h"
+ #include "mozilla/IntegerRange.h"
+@@ -11888,6 +11891,15 @@ void PresShell::SetIsActive(bool aIsActive) {
+     };
+     mDocument->EnumerateExternalResources(recurse);
+     mDocument->EnumerateSubDocuments(recurse);
++#ifdef MOZ_WIDGET_QT
++    // Rendering can stop while the document stays active for background audio.
++    mDocument->EnumerateActivityObservers([](nsISupports* aSupports) {
++      nsCOMPtr<nsIContent> content = do_QueryInterface(aSupports);
++      if (auto* media = HTMLMediaElement::FromNodeOrNull(content)) {
++        media->NotifyPresentationActivityChanged();
++      }
++    });
++#endif
+   }
+ 
+   UpdateImageLockingState();
