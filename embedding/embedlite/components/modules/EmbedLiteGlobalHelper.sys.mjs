@@ -15,6 +15,10 @@ Services.scriptloader.loadSubScript(
 );
 const { Logger } = loggerScope;
 
+// Initialize chrome custom elements for windowless browsers as well as the
+// main browser window. OpenSearch loading uses a toolkit hidden browser.
+ChromeUtils.importESModule("resource://gre/modules/CustomElementsListener.sys.mjs");
+
 // Register ESR115 JSWindowActors in the parent process. EmbedLite does not run
 // Firefox's normal browser chrome bootstrap that would otherwise do this.
 ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");

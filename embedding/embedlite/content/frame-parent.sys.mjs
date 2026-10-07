@@ -72,6 +72,16 @@ export function sendDocumentMessage(browser, name, data) {
     // A late reply must never fall back to the new document's frame script.
     return true;
   }
+  if (name === "embedui:runjavascript") {
+    const actor = browser.browsingContext?.currentWindowGlobal?.getActor("EmbedLiteFrame");
+    if (current(actor)) {
+      // Commands can precede the new document's Ready/Commands handshake.
+      // Actor messages are ordered; initialize its helper before dispatch.
+      actor.sendAsyncMessage("Initialize", {});
+      actor.sendAsyncMessage("Command", { name, data });
+    }
+    return true;
+  }
   const actors = [...state.actors].filter(current);
   const top = actors.find(actor => !actor.browsingContext.parent);
   const focused = current(state.focused) ? state.focused : (state.interacted ? null : top);

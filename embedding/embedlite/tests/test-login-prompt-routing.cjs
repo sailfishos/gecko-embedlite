@@ -113,3 +113,19 @@ async function testAuthRouting() {
   console.log("Background HTTP-auth routing tests passed");
 }
 testAuthRouting().catch(error => { console.error(error); process.exitCode = 1; });
+
+// The embedder may respond while sendAsyncMessage is still on the stack.
+const replyMethod = source.match(/  onMessageReceived\(messageName, message\) \{[\s\S]*?\n  },/);
+assert.ok(replyMethod);
+vm.runInContext(`Object.assign(prompter, {warn() {}, ${replyMethod[0]}});`, scope);
+let immediateCalls = 0;
+scope.Services.embedlite.removeMessageListener = () => {};
+scope.Services.embedlite.sendAsyncMessage = (endpoint, name, json) => {
+  const { id } = JSON.parse(json);
+  scope.prompter.onMessageReceived("embedui:login", JSON.stringify({ id, buttonidx: 0 }));
+  assert.equal(scope.prompter._pendingRequests[id], undefined);
+};
+scope.prompter._showLoginNotification({ ownerDocument: {}, browsingContext: { window: null, endpoint: 17 } },
+  "password-save", [], [{ callback() { ++immediateCalls; } }], {});
+assert.equal(immediateCalls, 1);
+console.log("Immediate login response test passed");

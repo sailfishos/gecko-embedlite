@@ -144,6 +144,18 @@
     }
   });
 
+  function reportIcon(event) {
+    const link = event.target;
+    if (!event.isTrusted || link.ownerDocument !== content.document ||
+        link.localName !== "link" || !link.relList.contains("icon")) return;
+    const url = link.href;
+    if (!/^(https?:|data:image\/)/i.test(url)) return;
+    sendAsyncMessage("Link:SetIcon", { url });
+  }
+
+  addEventListener("DOMLinkAdded", reportIcon, true);
+  addEventListener("DOMLinkChanged", reportIcon, true);
+
   function state(paintX = 0, paintY = 0) {
     const root = content.document?.scrollingElement ||
       content.document?.documentElement;
