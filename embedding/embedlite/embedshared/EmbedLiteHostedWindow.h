@@ -7,6 +7,7 @@
 #define MOZ_EMBEDLITE_HOSTED_WINDOW_H
 
 #include "mozilla/embedlite/EmbedLiteChromeTypes.h"
+#include "EmbedLiteChromeContentSession.h"
 #include "mozilla/WidgetUtils.h"
 #include "nsIWidget.h"
 #include "nsString.h"
@@ -113,6 +114,10 @@ private:
   void SetContentDesktopMode(uint64_t aTabId, bool aValue);
   bool SetContentJavascriptEnabled(bool aEnabled);
   void SetContentThrottlePainting(uint64_t aTabId, bool aValue);
+  bool SetBackgroundMediaEnabled(bool);
+  bool MediaCommand(uint64_t, uint64_t, uint64_t, EmbedLiteMediaCommand, double);
+  void SendMediaStates();
+  void OnMediaStateChanged(const EmbedLiteMediaState&);
   void SuspendContentTimeouts(uint64_t aTabId);
   void ResumeContentTimeouts(uint64_t aTabId);
   bool SetContentHttpUserAgent(uint64_t aTabId, const nsAString& aValue);

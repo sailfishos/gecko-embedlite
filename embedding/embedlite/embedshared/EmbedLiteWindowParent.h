@@ -128,6 +128,9 @@ public:
   bool SetDesktopMode(uint64_t, bool) override;
   bool SetJavascriptEnabled(bool) override;
   bool SetThrottlePainting(uint64_t, bool) override;
+  bool SetBackgroundMediaEnabled(bool) override;
+  bool MediaCommand(uint64_t, uint64_t, uint64_t, EmbedLiteMediaCommand, double) override;
+  void OnMediaStateChanged(const EmbedLiteMediaState&);
   bool SuspendTimeouts(uint64_t) override;
   bool ResumeTimeouts(uint64_t) override;
   bool SetHttpUserAgent(uint64_t, const char16_t*) override;

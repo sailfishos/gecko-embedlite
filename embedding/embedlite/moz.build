@@ -67,6 +67,7 @@ UNIFIED_SOURCES += [
     'EmbedLiteApp.cpp',
     'EmbedLiteMessagePump.cpp',
     'EmbedLiteWindow.cpp',
+    'embedshared/EmbedLiteChromeMedia.cpp',
     'embedshared/EmbedLiteChromeSessionChild.cpp',
     'embedshared/EmbedLiteHostedWindow.cpp',
     'embedshared/EmbedLitePuppetWidget.cpp',

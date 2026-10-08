@@ -5,6 +5,7 @@
 "use strict";
 
 (() => {
+  const Ci = Components.interfaces;
   const { findInPage } = ChromeUtils.importESModule(
     "chrome://embedlitechrome/content/find-parent.sys.mjs");
   try {
@@ -42,6 +43,9 @@
   const MAX_CONTENT_DATA_LENGTH = 1024 * 1024;
   const listeners = new WeakMap();
   const loadedFrameScripts = new WeakMap();
+  const progressListeners = new WeakMap();
+  // Keep the host setting across frame-loader and cached context replacement.
+  const textZooms = new WeakMap();
   const frameScripts = new Set();
   const messageNames = new Set();
 
@@ -109,6 +113,14 @@
     }
   }
 
+  function applyTextZoom(browser) {
+    const zoom = textZooms.get(browser);
+    const context = browser.browsingContext;
+    if (zoom !== undefined && context && context.textZoom !== zoom) {
+      context.textZoom = zoom;
+    }
+  }
+
   function contentMessageManager(browser) {
     return browser.messageManager || browser.frameLoader?.messageManager || null;
   }
@@ -129,6 +141,7 @@
     }
     const listener = message => {
       if (name === INTERNAL_STATE) {
+        applyTextZoom(browser);
         emit(browser, "EmbedLiteChromeContentState", name, message.data);
       } else {
         // SelectionHandler uses sync delivery as ordering, not for its
@@ -173,7 +186,57 @@
     loaded.add(uri);
   }
 
+  const requestUserAgents = new WeakMap();
+  const userAgentObserver = {
+    observe(subject) {
+      const channel = subject.QueryInterface(Ci.nsIHttpChannel);
+      const info = channel.loadInfo;
+      if (info.externalContentPolicyType !== Ci.nsIContentPolicy.TYPE_DOCUMENT) return;
+      const context = info.browsingContext;
+      const browser = context?.top.embedderElement;
+      if (!context || context.parent || browser?.ownerDocument !== document) return;
+      requestUserAgents.set(browser, {
+        uri: channel.URI.spec,
+        userAgent: channel.getRequestHeader("User-Agent"),
+      });
+    },
+  };
+  const responseTopics = ["http-on-examine-response", "http-on-examine-cached-response",
+                          "http-on-examine-merged-response"];
+  for (const topic of responseTopics) Services.obs.addObserver(userAgentObserver, topic);
+  window.addEventListener("unload", () => {
+    for (const topic of responseTopics) Services.obs.removeObserver(userAgentObserver, topic);
+  }, { once: true });
+
+  function observeUserAgent(browser) {
+    if (progressListeners.has(browser)) return;
+    const listener = {
+      QueryInterface: ChromeUtils.generateQI([
+        "nsIWebProgressListener", "nsISupportsWeakReference",
+      ]),
+      onStateChange(progress, request, flags) {
+        if (!progress.isTopLevel ||
+            !(flags & Ci.nsIWebProgressListener.STATE_STOP) ||
+            !(flags & Ci.nsIWebProgressListener.STATE_IS_NETWORK)) return;
+        try {
+          const used = requestUserAgents.get(browser);
+          const channel = request.QueryInterface(Ci.nsIChannel);
+          if (!used || used.uri !== channel.URI.spec) return;
+          requestUserAgents.delete(browser);
+          emit(browser, "EmbedLiteChromeContentMessage", "embed:HttpUserAgentUsed",
+               { userAgent: used.userAgent });
+        } catch (error) {
+          // Non-HTTP documents have no request user agent to report.
+        }
+      },
+    };
+    browser.addProgressListener(listener, Ci.nsIWebProgress.NOTIFY_STATE_NETWORK);
+    progressListeners.set(browser, listener);
+  }
+
   function attach(browser) {
+    observeUserAgent(browser);
+    applyTextZoom(browser);
     frameBridge.attachFrameBridge(browser, (name, data) =>
       emit(browser, "EmbedLiteChromeContentMessage", name, data));
     if (!contentMessageManager(browser)) {
@@ -248,6 +311,10 @@
     const data = browser.getAttribute("data-embedlite-command-data");
     try {
       switch (command) {
+        case "set-user-agent":
+          // Set the parent-owned context before a subsequent load is started.
+          browser.browsingContext.customUserAgent = name || "";
+          break;
         case "load-script":
           frameScripts.add(data);
           loadFrameScript(browser, data);
@@ -261,6 +328,12 @@
           removeMessageListener(browser, name);
           break;
         case "send-message": {
+          if (name === "embedui:textZoom") {
+            const zoom = Number(JSON.parse(data)?.zoom);
+            textZooms.set(browser, Number.isFinite(zoom) && zoom > 0 ? zoom : 1.0);
+            applyTextZoom(browser);
+            break;
+          }
           if (name === "embedui:find") {
             findInPage(browser, JSON.parse(data), result => {
               if (messageNames.has("embed:find")) {

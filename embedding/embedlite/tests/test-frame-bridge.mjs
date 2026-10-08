@@ -114,3 +114,54 @@ for (const [request, reply] of [
   next.receiveMessage({ name: "Hidden" });
 }
 console.log("BFCache actor reactivation tests passed");
+
+// JavaScript submitted before Ready/Commands must reach the current document.
+const early = new bridge.EmbedLiteFrameParent();
+early.manager = { isCurrentGlobal: true };
+early.browsingContext = { top: { embedderElement: browser }, parent: null };
+early.sent = [];
+browser.browsingContext.currentWindowGlobal = { getActor: () => early };
+const script = { script: "return document.title", callbackId: 7 };
+assert.equal(bridge.sendDocumentMessage(browser, "embedui:runjavascript", script), true);
+assert.deepEqual(early.sent, [
+  { name: "Initialize", data: {} },
+  { name: "Command", data: { name: "embedui:runjavascript", data: script } },
+]);
+early.manager.isCurrentGlobal = false;
+bridge.sendDocumentMessage(browser, "embedui:runjavascript", script);
+assert.equal(early.sent.length, 2, "Stale documents cannot receive JavaScript");
+console.log("Early document JavaScript routing tests passed");
+
+// Queued results from a navigated document cannot leak into its replacement.
+bridge.listenDocumentMessage(browser, "embed:runjavascript", true);
+const oldDocument = actor(null);
+const beforeNavigation = emitted.length;
+oldDocument.receiveMessage({ name: "Message", data: {
+  name: "embed:runjavascript", data: { callbackId: 41, result: "old document" },
+} });
+oldDocument.manager.isCurrentGlobal = false;
+await oldDocument.pending;
+assert.equal(emitted.length, beforeNavigation);
+
+// Interleaved background-tab messages retain their owning browser.
+const otherBrowser = { browsingContext: {} };
+const otherMessages = [];
+bridge.attachFrameBridge(otherBrowser, (name, data) => otherMessages.push({ name, data }));
+const otherActor = new bridge.EmbedLiteFrameParent();
+otherActor.manager = { isCurrentGlobal: true };
+otherActor.browsingContext = { top: { embedderElement: otherBrowser }, parent: null };
+otherActor.sent = [];
+otherActor.receiveMessage({ name: "Ready" });
+const foreground = actor(null);
+for (const name of ["Link:SetIcon", "embed:HttpUserAgentUsed", "embed:login"]) {
+  bridge.listenDocumentMessage(browser, name, true);
+  bridge.listenDocumentMessage(otherBrowser, name, true);
+  otherActor.receiveMessage({ name: "Message", data: { name, data: { owner: "background" } } });
+  foreground.receiveMessage({ name: "Message", data: { name, data: { owner: "foreground" } } });
+  await Promise.all([otherActor.pending, foreground.pending]);
+  assert.equal(otherMessages.at(-1).data.owner, "background");
+  assert.equal(emitted.at(-1).data.owner, "foreground");
+  assert.equal(otherMessages.at(-1).name, name);
+  assert.equal(emitted.at(-1).name, name);
+}
+console.log("Navigation cancellation and background-tab message ownership tests passed");

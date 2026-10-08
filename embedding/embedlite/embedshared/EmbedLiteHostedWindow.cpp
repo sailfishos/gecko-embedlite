@@ -471,6 +471,31 @@ void EmbedLiteHostedWindow::ResumeContentTimeouts(uint64_t aTabId)
   }
 }
 
+bool EmbedLiteHostedWindow::SetBackgroundMediaEnabled(bool aEnabled)
+{
+  return mChromeSession && !mDestroying &&
+    mChromeSession->SetBackgroundMediaEnabled(aEnabled);
+}
+bool EmbedLiteHostedWindow::MediaCommand(uint64_t aTabId,
+    uint64_t aControllerToken, uint64_t aTrackToken,
+    EmbedLiteMediaCommand aCommand, double aPosition)
+{
+  return mChromeSession && !mDestroying && mChromeSession->MediaCommand(
+    aTabId, aControllerToken, aTrackToken, aCommand, aPosition);
+}
+void EmbedLiteHostedWindow::SendMediaStates()
+{
+  if (mChromeSession && !mDestroying) {
+    mChromeSession->SendMediaStates();
+  }
+}
+void EmbedLiteHostedWindow::OnMediaStateChanged(const EmbedLiteMediaState& aState)
+{
+  if (mOwner) {
+    mOwner->OnMediaStateChanged(aState);
+  }
+}
+
 bool EmbedLiteHostedWindow::SetContentHttpUserAgent(
     uint64_t aTabId, const nsAString& aValue)
 {

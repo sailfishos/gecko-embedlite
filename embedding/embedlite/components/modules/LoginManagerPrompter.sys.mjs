@@ -1646,6 +1646,7 @@ LoginManagerPrompter.prototype = {
       timeout: Date.now() + 10000
     }
 
+    let uniqueId;
     Services.embedlite.addMessageListener("embedui:login", this);
     try {
       // Form prompts carry the browser element, including for remote tabs.
@@ -1653,18 +1654,21 @@ LoginManagerPrompter.prototype = {
       let winid = aBrowser?.ownerDocument && aBrowser.browsingContext
         ? Services.embedlite.getIDByBrowsingContext(aBrowser.browsingContext)
         : Services.embedlite.getIDByWindow(aBrowser?.top || null);
-      let uniqueid = this._getRandomId();
+      uniqueId = this._getRandomId();
+      this._pendingRequests[uniqueId] = aButtons;
       Services.embedlite.sendAsyncMessage(winid, "embed:login",
                                           JSON.stringify({
                                                            name: aName,
                                                            textBundle: aTextBundle,
                                                            buttons: aButtons,
                                                            options: logoptions,
-                                                           id: uniqueid,
+                                                           id: uniqueId,
                                                            formdata: aFormData
                                                          }));
-      this._pendingRequests[uniqueid] = aButtons;
     } catch (e) {
+      if (uniqueId) {
+        delete this._pendingRequests[uniqueId];
+      }
       Logger.warn("LoginManagerPrompter: sending async message failed", e)
     }
   },

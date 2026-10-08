@@ -144,6 +144,18 @@
     }
   });
 
+  function reportIcon(event) {
+    const link = event.target;
+    if (!event.isTrusted || link.ownerDocument !== content.document ||
+        link.localName !== "link" || !link.relList.contains("icon")) return;
+    const url = link.href;
+    if (!/^(https?:|data:image\/)/i.test(url)) return;
+    sendAsyncMessage("Link:SetIcon", { url });
+  }
+
+  addEventListener("DOMLinkAdded", reportIcon, true);
+  addEventListener("DOMLinkChanged", reportIcon, true);
+
   function state(paintX = 0, paintY = 0) {
     const root = content.document?.scrollingElement ||
       content.document?.documentElement;
@@ -212,6 +224,12 @@
       docuri: content.document.documentURI || "",
     });
     reportOrientation();
+  }, true);
+  // BFCache restoration can revive a context with an older text scale.
+  addEventListener("pageshow", event => {
+    if (event.target === content.document) {
+      state();
+    }
   }, true);
   addEventListener("pagehide", event => {
     for (const [popupId, popup] of blockedPopups) {
