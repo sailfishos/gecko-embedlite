@@ -141,6 +141,7 @@ Patch81:    0081-Restore-native-colour-scheme-fallback-for-ambience-m.patch
 Patch82:    0082-sailfishos-Suspend-hidden-video-while-retaining-background-audio.patch
 Patch83:    0083-sailfishos-Notify-embedders-when-the-main-media-controller-changes.patch
 Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.patch
+Patch85:    0001-Allow-Eme-for-arm-and-Aarch64.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0
