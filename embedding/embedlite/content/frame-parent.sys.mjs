@@ -83,8 +83,11 @@ export function sendDocumentMessage(browser, name, data) {
     return true;
   }
   const actors = [...state.actors].filter(current);
-  const top = actors.find(actor => !actor.browsingContext.parent);
-  const focused = current(state.focused) ? state.focused : (state.interacted ? null : top);
+  const global = browser.browsingContext?.currentWindowGlobal;
+  const top = actors.find(actor => !actor.browsingContext.parent) ||
+    global?.getActor("EmbedLiteFrame");
+  const interacted = state.interacted && state.interactionGlobal === global;
+  const focused = current(state.focused) ? state.focused : (interacted ? null : top);
   const documentCommand = /^(Browser:|Gesture:|embed:ContextMenu)/.test(name);
   const startsSelection = /^(Browser:Selection(Start|Attach)|Browser:CaretAttach)$/.test(name);
   if (startsSelection) state.selectionOwner = focused;
@@ -93,10 +96,21 @@ export function sendDocumentMessage(browser, name, data) {
     ? state.selectionOwner : focused;
   const broadcast = name === "Viewport:Change" || name === "Browser:SelectionColorUpdate";
   const targets = broadcast ? actors : [documentCommand ? owner : top];
-  if (!actors.some(actor => actor.commands?.has(name))) return false;
-  void rootGeometry(browser).then(geometry => {
+  if (!selectionCommand && !actors.some(actor => actor.commands?.has(name))) return false;
+  // Selection can arrive before the helper advertises its commands. Initialize
+  // the captured owner, and never fall back to a replacement frame script.
+  for (const actor of targets) {
+    if (selectionCommand && current(actor) && !actor.commands) {
+      actor.sendAsyncMessage("Initialize", {});
+    }
+  }
+  // Geometry queries must not reorder Start, SelectAll and Copy.
+  state.pendingCommands = (state.pendingCommands || Promise.resolve()).then(async () => {
+    if (browser.browsingContext?.currentWindowGlobal !== global) return;
+    const geometry = await rootGeometry(browser);
     for (const actor of targets) {
-      if (current(actor) && actor.commands?.has(name)) {
+      if (current(actor) && (actor.commands?.has(name) ||
+          (selectionCommand && !actor.commands))) {
         actor.sendAsyncMessage("Command", { name, data, geometry });
       }
     }
@@ -125,6 +139,7 @@ export class EmbedLiteFrameParent extends JSWindowActorParent {
       case "Focus":
         state.focused = this;
         state.interacted = true;
+        state.interactionGlobal = browser.browsingContext?.currentWindowGlobal;
         break;
       case "Message":
         // Serialize asynchronous coordinate queries to preserve helper ordering.
