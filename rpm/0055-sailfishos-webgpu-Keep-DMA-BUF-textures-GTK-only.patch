@@ -66,7 +66,7 @@ index 713308a31da5..2b697cf8a8d6 100644
                                          aFormat, aUsage);
  #elif defined(XP_MACOSX)
 diff --git a/dom/webgpu/ipc/WebGPUParent.cpp b/dom/webgpu/ipc/WebGPUParent.cpp
-index 8ed716c8d3e2..5066499b8918 100644
+index 601af777870c..cd45ef69da33 100644
 --- a/dom/webgpu/ipc/WebGPUParent.cpp
 +++ b/dom/webgpu/ipc/WebGPUParent.cpp
 @@ -26,7 +26,7 @@
@@ -96,7 +96,7 @@ index 8ed716c8d3e2..5066499b8918 100644
  extern const WGPUVkImageHandle* wgpu_server_get_vk_image_handle(
      WGPUWebGPUParentPtr aParent, WGPUTextureId aId) {
    auto* parent = static_cast<WebGPUParent*>(aParent);
-@@ -1924,7 +1924,7 @@ Maybe<ffi::WGPUFfiLUID> WebGPUParent::GetCompositorDeviceLuid() {
+@@ -1954,7 +1954,7 @@ Maybe<ffi::WGPUFfiLUID> WebGPUParent::GetCompositorDeviceLuid() {
  }
  #endif
  
@@ -106,10 +106,10 @@ index 8ed716c8d3e2..5066499b8918 100644
    if (!mParent) {
      return;
 diff --git a/dom/webgpu/ipc/WebGPUParent.h b/dom/webgpu/ipc/WebGPUParent.h
-index 816f29ec4106..e7b5c3d9b06c 100644
+index f584b3fdbbc9..b7bfde1e56b7 100644
 --- a/dom/webgpu/ipc/WebGPUParent.h
 +++ b/dom/webgpu/ipc/WebGPUParent.h
-@@ -266,7 +266,7 @@ class WebGPUParent final : public PWebGPUParent, public SupportsWeakPtr {
+@@ -267,7 +267,7 @@ class WebGPUParent final : public PWebGPUParent, public SupportsWeakPtr {
    std::unordered_map<RawId, RefPtr<gfx::FileHandleWrapper>> mDeviceFenceHandles;
  };
  
@@ -144,10 +144,10 @@ index ac89d8a8036f..8a01488de178 100644
  [dependencies.wgc]
  package = "wgpu-core"
 diff --git a/gfx/wgpu_bindings/src/server.rs b/gfx/wgpu_bindings/src/server.rs
-index dbf60a0cc3f5..5dd8c6f956e9 100644
+index 066b3724f9ab..e608df62ef85 100644
 --- a/gfx/wgpu_bindings/src/server.rs
 +++ b/gfx/wgpu_bindings/src/server.rs
-@@ -1604,13 +1604,13 @@ extern "C" {
+@@ -1612,13 +1612,13 @@ extern "C" {
          parent: WebGPUParentPtr,
          id: id::TextureId,
      ) -> *mut core::ffi::c_void;
@@ -163,7 +163,7 @@ index dbf60a0cc3f5..5dd8c6f956e9 100644
      fn wgpu_server_get_dma_buf_fd(parent: WebGPUParentPtr, id: id::TextureId) -> i32;
      #[cfg(target_os = "macos")]
      fn wgpu_server_get_external_io_surface_id(parent: WebGPUParentPtr, id: id::TextureId) -> u32;
-@@ -1878,7 +1878,7 @@ impl Global {
+@@ -1887,7 +1887,7 @@ impl Global {
          true
      }
  
@@ -172,7 +172,7 @@ index dbf60a0cc3f5..5dd8c6f956e9 100644
      fn create_texture_with_shared_texture_dmabuf(
          &self,
          device_id: id::DeviceId,
-@@ -2209,7 +2209,7 @@ impl Global {
+@@ -2221,7 +2221,7 @@ impl Global {
                          }
                      }
  
@@ -196,7 +196,7 @@ index a3f1cc357366..b4b8dbca8d51 100644
  gkrust_features += ["glean_with_gecko"]
  
 diff --git a/toolkit/library/rust/shared/Cargo.toml b/toolkit/library/rust/shared/Cargo.toml
-index dbcd527798f6..1948d81f6552 100644
+index cc4e5a66833d..5ab98c17a60d 100644
 --- a/toolkit/library/rust/shared/Cargo.toml
 +++ b/toolkit/library/rust/shared/Cargo.toml
 @@ -176,6 +176,7 @@ for_xul = [

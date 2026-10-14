@@ -50,7 +50,7 @@
 
 Name:       gecko-embedlite-qt5
 Summary:    Gecko EmbedLite runtime
-Version:    153.4.0
+Version:    153.5.0
 Release:    1
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/gecko-dev
@@ -570,10 +570,13 @@ install -d %{buildroot}%{mozappdir}/chrome
 cp -a mobile/sailfishos/chrome/. %{buildroot}%{mozappdir}/chrome/
 chmod -R go-w %{buildroot}%{mozappdir}/components %{buildroot}%{mozappdir}/chrome
 
-gecko_abi=$(echo "%{version}" | cut -d. -f1,2)
+# Git-derived package versions can differ from the native Gecko ABI version.
+gecko_soname=$(readelf -d ${RPM_BUILD_ROOT}%{mozappdir}/libxul.so | \
+    sed -n 's/.*(SONAME).*\[\(libxul\.so\.[0-9][0-9.]*\)\].*/\1/p')
+test -n "$gecko_soname"
 mv ${RPM_BUILD_ROOT}%{mozappdir}/libxul.so \
-    ${RPM_BUILD_ROOT}%{mozappdir}/libxul.so.${gecko_abi}
-ln -s libxul.so.${gecko_abi} ${RPM_BUILD_ROOT}%{mozappdir}/libxul.so
+    ${RPM_BUILD_ROOT}%{mozappdir}/"$gecko_soname"
+ln -s "$gecko_soname" ${RPM_BUILD_ROOT}%{mozappdir}/libxul.so
 
 rm -rf ${RPM_BUILD_ROOT}%{mozappdirdev}/sdk/lib/libxul.so
 ln -s %{mozappdir}/libxul.so ${RPM_BUILD_ROOT}%{mozappdirdev}/sdk/lib/libxul.so

@@ -12,10 +12,10 @@ frame and prevent child requests from enabling it while its parent is hidden.
  2 files changed, 14 insertions(+)
 
 diff --git a/dom/ipc/BrowserBridgeParent.cpp b/dom/ipc/BrowserBridgeParent.cpp
-index 2c7d595aede8..f9c096139f1d 100644
+index 4b82051b6fee..27086dc4424e 100644
 --- a/dom/ipc/BrowserBridgeParent.cpp
 +++ b/dom/ipc/BrowserBridgeParent.cpp
-@@ -127,6 +127,9 @@ nsresult BrowserBridgeParent::InitWithProcess(
+@@ -129,6 +129,9 @@ nsresult BrowserBridgeParent::InitWithProcess(
    mBrowserParent->SetBrowserBridgeParent(this);
    mBrowserParent->SetOwnerElement(aParentBrowser->GetOwnerElement());
    mBrowserParent->InitRendering();
@@ -25,7 +25,7 @@ index 2c7d595aede8..f9c096139f1d 100644
  
    GetBrowsingContext()->SetCurrentBrowserParent(mBrowserParent);
  
-@@ -203,7 +206,11 @@ IPCResult BrowserBridgeParent::RecvUpdateRemotePrintSettings(
+@@ -205,7 +208,11 @@ IPCResult BrowserBridgeParent::RecvUpdateRemotePrintSettings(
  }
  
  IPCResult BrowserBridgeParent::RecvRenderLayers(const bool& aEnabled) {
@@ -38,7 +38,7 @@ index 2c7d595aede8..f9c096139f1d 100644
  }
  
 diff --git a/dom/ipc/BrowserParent.cpp b/dom/ipc/BrowserParent.cpp
-index c59d679441bf..b73ee62d35a5 100644
+index ed6b784a8319..cedf4294be63 100644
 --- a/dom/ipc/BrowserParent.cpp
 +++ b/dom/ipc/BrowserParent.cpp
 @@ -3791,6 +3791,13 @@ void BrowserParent::SetRenderLayers(bool aEnabled) {

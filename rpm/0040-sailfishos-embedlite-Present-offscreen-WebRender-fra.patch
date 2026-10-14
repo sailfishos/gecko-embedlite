@@ -64,7 +64,7 @@ EmbedLite frames in order to publish the completed offscreen image.
  create mode 100644 widget/EmbedLiteCompositorWidget.h
 
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 90e61367637d..1ea4168db23f 100644
+index 7cef0252a586..28401071835d 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -156,6 +156,8 @@
@@ -84,7 +84,7 @@ index 90e61367637d..1ea4168db23f 100644
        mHeaderData(nullptr),
        mLanguageFromCharset(nullptr),
        mServoRestyleRootDirtyBits(0),
-@@ -11458,6 +11461,42 @@ ViewportMetaData Document::GetViewportMetaData() const {
+@@ -11456,6 +11459,42 @@ ViewportMetaData Document::GetViewportMetaData() const {
                                         : ViewportMetaData();
  }
  
@@ -631,10 +631,10 @@ index 15a81dd75aff..3e8929eecd13 100644
        CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(
            aScale, aOptions, aUseExternalSurfaceSize, aSurfaceSize,
 diff --git a/gfx/layers/ipc/CompositorBridgeParent.cpp b/gfx/layers/ipc/CompositorBridgeParent.cpp
-index eb39d668a577..257140b65d0c 100644
+index 6e145f876d72..69c87c329f9f 100644
 --- a/gfx/layers/ipc/CompositorBridgeParent.cpp
 +++ b/gfx/layers/ipc/CompositorBridgeParent.cpp
-@@ -1240,6 +1240,13 @@ void CompositorBridgeParent::EnsureWebRenderBridgeParentInitialized() {
+@@ -1245,6 +1245,13 @@ void CompositorBridgeParent::EnsureWebRenderBridgeParentInitialized() {
    MOZ_ASSERT(mCompositorScheduler);
  }
  
@@ -649,7 +649,7 @@ index eb39d668a577..257140b65d0c 100644
    if (mWrBridge) {
      RefPtr<wr::WebRenderAPI> api = mWrBridge->GetWebRenderAPI();
 diff --git a/gfx/layers/ipc/CompositorBridgeParent.h b/gfx/layers/ipc/CompositorBridgeParent.h
-index bb5af4036004..96380671adc3 100644
+index 5ea2f2967817..6c27f256afba 100644
 --- a/gfx/layers/ipc/CompositorBridgeParent.h
 +++ b/gfx/layers/ipc/CompositorBridgeParent.h
 @@ -26,6 +26,10 @@
@@ -663,7 +663,7 @@ index bb5af4036004..96380671adc3 100644
  namespace gfx {
  class GPUProcessManager;
  class GPUParent;
-@@ -233,7 +237,7 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
+@@ -236,7 +240,7 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
  MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(
      CompositorBridgeParentBase::TransformsToSkip)
  
@@ -672,7 +672,7 @@ index bb5af4036004..96380671adc3 100644
    friend class CompositorThreadHolder;
    friend class InProcessCompositorSession;
    friend class gfx::GPUProcessManager;
-@@ -550,6 +554,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
+@@ -559,6 +563,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
        const WindowKind& aWindowKind) override;
    void EnsureWebRenderBridgeParentInitialized() override;
    RefPtr<WebRenderBridgeParent> GetWebRenderBridgeParent() const;
@@ -719,10 +719,10 @@ index c32ce744a2ac..67b918066c01 100644
    sInstance->mPendingCompositorBridges.AppendElement(bridge);
    return bridge.forget();
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index 516dfd47c6a1..a4c7580a5838 100644
+index 050068ea8abe..354f048be860 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
-@@ -3229,6 +3229,12 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
+@@ -3270,6 +3270,12 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
  
  void WebRenderBridgeParent::CompositeToDefaultTarget(
      VsyncId aId, wr::RenderReasons aReasons) {
@@ -1295,7 +1295,7 @@ index 392656638935..d9a5e291c6cb 100644
    void PrependSheetOfType(Origin, StyleSheet*);
    void AppendSheetOfType(Origin, StyleSheet*);
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index aadd37633541..d783a87a172a 100644
+index cd9517130362..26ab4cdd440d 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -15122,7 +15122,7 @@

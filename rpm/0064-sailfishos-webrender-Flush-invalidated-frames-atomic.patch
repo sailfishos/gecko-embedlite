@@ -9,10 +9,10 @@ Subject: Flush invalidated frames atomically
  2 files changed, 41 insertions(+), 10 deletions(-)
 
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index a4c7580a5838..707158d1ee85 100644
+index 354f048be860..3b90f2ac64fe 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
-@@ -1818,19 +1818,22 @@ void WebRenderBridgeParent::FlushSceneBuilds() {
+@@ -1859,19 +1859,22 @@ void WebRenderBridgeParent::FlushSceneBuilds() {
    ScheduleGenerateFrame(wr::RenderReasons::FLUSH);
  }
  
@@ -38,7 +38,7 @@ index a4c7580a5838..707158d1ee85 100644
    }
  }
  
-@@ -2059,7 +2062,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvGetSnapshot(
+@@ -2100,7 +2103,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvGetSnapshot(
    }
  
    FlushSceneBuilds();
@@ -48,7 +48,7 @@ index a4c7580a5838..707158d1ee85 100644
    mLateInit->mApi->Readback(start, size, bufferTexture->GetFormat(),
                              Range<uint8_t>(buffer, buffer_size.value()),
                              aNeedsYFlip);
-@@ -2379,7 +2383,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvSyncWithCompositor() {
+@@ -2420,7 +2424,8 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvSyncWithCompositor() {
  
    FlushSceneBuilds();
    if (RefPtr<WebRenderBridgeParent> root = GetRootWebRenderBridgeParent()) {
@@ -58,7 +58,7 @@ index a4c7580a5838..707158d1ee85 100644
    }
    FlushFramePresentation();
    // Finally, we force the AsyncImagePipelineManager to handle all the
-@@ -2622,7 +2627,8 @@ void WebRenderBridgeParent::CompositeToTarget(VsyncId aId,
+@@ -2663,7 +2668,8 @@ void WebRenderBridgeParent::CompositeToTarget(VsyncId aId,
    }
  
    mCompositionOpportunityId = mCompositionOpportunityId.Next();
@@ -68,7 +68,7 @@ index a4c7580a5838..707158d1ee85 100644
  }
  
  TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
-@@ -2636,7 +2642,8 @@ TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
+@@ -2677,7 +2683,8 @@ TimeDuration WebRenderBridgeParent::GetVsyncInterval() const {
  
  void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
                                                 bool aForceGenerateFrame,
@@ -78,7 +78,7 @@ index a4c7580a5838..707158d1ee85 100644
    // This function should only get called in the root WRBP
    MOZ_ASSERT(IsRootWebRenderBridgeParent());
    LOG("WebRenderBridgeParent::MaybeGenerateFrame() PipelineId %" PRIx64
-@@ -2666,6 +2673,9 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
+@@ -2707,6 +2714,9 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
    // generating frames with the old scene even during slow scene builds.
    wr::TransactionBuilder fastTxn(mLateInit->mApi,
                                   false /* useSceneBuilderThread */);
@@ -88,7 +88,7 @@ index a4c7580a5838..707158d1ee85 100644
    // Handle transaction that is related to DisplayList.
    wr::TransactionBuilder sceneBuilderTxn(mLateInit->mApi);
    wr::AutoTransactionSender sender(mLateInit->mApi, &sceneBuilderTxn);
-@@ -2954,13 +2964,26 @@ void WebRenderBridgeParent::FlushRendering(wr::RenderReasons aReasons,
+@@ -2995,13 +3005,26 @@ void WebRenderBridgeParent::FlushRendering(wr::RenderReasons aReasons,
  
    if (aBlocking) {
      FlushSceneBuilds();
@@ -117,7 +117,7 @@ index a4c7580a5838..707158d1ee85 100644
      const uint32_t& aColor) {
    SetClearColor(gfx::DeviceColor::FromABGR(aColor));
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.h b/gfx/layers/wr/WebRenderBridgeParent.h
-index 2cc7439d525a..8f1f7a389ea1 100644
+index a32d5943cfa4..cdcf8564dcc3 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.h
 +++ b/gfx/layers/wr/WebRenderBridgeParent.h
 @@ -282,6 +282,12 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
@@ -133,7 +133,7 @@ index 2cc7439d525a..8f1f7a389ea1 100644
    /**
     * Schedule generating WebRender frame definitely at next composite timing.
     *
-@@ -441,11 +447,13 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
+@@ -443,11 +449,13 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
    void RollbackWrEpoch();
  
    void FlushSceneBuilds();

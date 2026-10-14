@@ -384,7 +384,7 @@ index 7e27151ac634..d90bd2f2e2e8 100644
  XPIDL_MODULE = "xpcom_io"
  
 diff --git a/xpcom/io/nsLocalFileUnix.cpp b/xpcom/io/nsLocalFileUnix.cpp
-index 77ada6c087a2..1a9cd325390d 100644
+index 3875223f98e4..388c7a59bbf9 100644
 --- a/xpcom/io/nsLocalFileUnix.cpp
 +++ b/xpcom/io/nsLocalFileUnix.cpp
 @@ -69,6 +69,12 @@ static nsresult MacErrorMapper(OSErr inErr);
@@ -400,7 +400,7 @@ index 77ada6c087a2..1a9cd325390d 100644
  #include "nsNativeCharsetUtils.h"
  #include "nsTraceRefcnt.h"
  
-@@ -2365,6 +2371,15 @@ nsLocalFile::Launch() {
+@@ -2359,6 +2365,15 @@ nsLocalFile::Launch() {
    }
  
    return giovfs->LaunchFile(mPath);
