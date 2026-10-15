@@ -123,7 +123,7 @@ FormAssistant.prototype = {
       return;
     }
 
-    let loginManager = aElement.ownerGlobal.windowGlobalChild?.getActor(
+    let loginManager = aElement.ownerDocument?.defaultView?.windowGlobalChild?.getActor(
       "LoginManager"
     );
     if (!loginManager) {

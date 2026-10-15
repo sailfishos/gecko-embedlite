@@ -14,10 +14,10 @@ rendering video. Reuse normal video suspension policy and its exemptions.
  3 files changed, 30 insertions(+), 2 deletions(-)
 
 diff --git a/dom/media/mediaelement/HTMLMediaElement.cpp b/dom/media/mediaelement/HTMLMediaElement.cpp
-index 438295c8a84e..6ef28cd859b3 100644
+index 1198b2663a5e..110325cff37f 100644
 --- a/dom/media/mediaelement/HTMLMediaElement.cpp
 +++ b/dom/media/mediaelement/HTMLMediaElement.cpp
-@@ -7317,6 +7317,12 @@ bool HTMLMediaElement::ShouldBeSuspendedByInactiveDocShell() const {
+@@ -7318,6 +7318,12 @@ bool HTMLMediaElement::ShouldBeSuspendedByInactiveDocShell() const {
    return bc && !bc->IsActive() && bc->Top()->GetSuspendMediaWhenInactive();
  }
  
@@ -30,7 +30,7 @@ index 438295c8a84e..6ef28cd859b3 100644
  void HTMLMediaElement::NotifyOwnerDocumentActivityChanged() {
    if (mDecoder && !IsBeingDestroyed()) {
      NotifyDecoderActivityChanges();
-@@ -8342,9 +8348,17 @@ void HTMLMediaElement::GetEMEInfo(dom::EMEDebugInfo& aInfo) {
+@@ -8343,9 +8349,17 @@ void HTMLMediaElement::GetEMEInfo(dom::EMEDebugInfo& aInfo) {
  
  void HTMLMediaElement::NotifyDecoderActivityChanges() const {
    if (mDecoder) {

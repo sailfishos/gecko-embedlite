@@ -165,3 +165,47 @@ for (const name of ["Link:SetIcon", "embed:HttpUserAgentUsed", "embed:login"]) {
   assert.equal(emitted.at(-1).name, name);
 }
 console.log("Navigation cancellation and background-tab message ownership tests passed");
+
+// Selection submitted before Ready/Commands stays ordered across geometry queries.
+const selectionBrowser = { browsingContext: {} };
+bridge.attachFrameBridge(selectionBrowser, () => {});
+bridge.loadDocumentHelper(selectionBrowser, "chrome://embedlite/content/embedhelper.js");
+const selectionActor = new bridge.EmbedLiteFrameParent();
+selectionActor.manager = { isCurrentGlobal: true };
+selectionActor.browsingContext = { top: { embedderElement: selectionBrowser }, parent: null };
+selectionActor.sent = [];
+const queries = [];
+selectionActor.sendQuery = () => new Promise(resolve => queries.push(resolve));
+selectionBrowser.browsingContext.currentWindowGlobal = { getActor: () => selectionActor };
+const selectionNames = ["Browser:SelectionStart", "Browser:SelectionSelectAll", "Browser:SelectionCopy"];
+for (const name of selectionNames)
+  assert.equal(bridge.sendDocumentMessage(selectionBrowser, name, {}), true);
+for (let i = 0; i < selectionNames.length; ++i) {
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(queries.length, i + 1, 'Only one geometry query may be outstanding');
+  queries[i]({ transform: identity });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(selectionActor.sent.filter(m => m.name === 'Command')[i].data.name, selectionNames[i]);
+}
+bridge.sendDocumentMessage(selectionBrowser, 'Browser:SelectionCopy', {});
+await new Promise(resolve => setImmediate(resolve));
+const delivered = selectionActor.sent.filter(m => m.name === 'Command').length;
+selectionActor.manager.isCurrentGlobal = false;
+queries.at(-1)({ transform: identity });
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(selectionActor.sent.filter(m => m.name === 'Command').length, delivered);
+console.log('Early selection command ordering and navigation cancellation tests passed');
+
+// A previous document's focus must not prevent starting selection after navigation.
+selectionActor.manager.isCurrentGlobal = true;
+selectionActor.receiveMessage({name: 'Focus'});
+selectionActor.receiveMessage({name: 'Hidden'});
+const navigated = new bridge.EmbedLiteFrameParent();
+navigated.manager = {isCurrentGlobal: true};
+navigated.browsingContext = selectionActor.browsingContext;
+navigated.sent = [];
+selectionBrowser.browsingContext.currentWindowGlobal = {getActor: () => navigated};
+bridge.sendDocumentMessage(selectionBrowser, 'Browser:SelectionStart', {});
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(navigated.sent.at(-1).data.name, 'Browser:SelectionStart');
+console.log('Selection focus ownership resets across documents');

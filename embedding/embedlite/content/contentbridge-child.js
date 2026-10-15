@@ -27,8 +27,7 @@
   function contentOrientation() {
     const { width, height } = contentGeometry();
     const landscape = width >= height;
-    const orientation = content.screen?.mozOrientation ||
-      content.screen?.orientation?.type;
+    const orientation = content.screen?.orientation?.type;
     if (["portrait-primary", "portrait-secondary", "landscape-primary",
          "landscape-secondary"].includes(orientation) &&
         orientation.startsWith(landscape ? "landscape" : "portrait")) {
@@ -38,6 +37,7 @@
   }
 
   function reportOrientation(force = false, painted = false) {
+    if (!firstPaint) return;
     const orientation = contentOrientation();
     if (force || orientation !== lastOrientation) {
       lastOrientation = orientation;
@@ -157,19 +157,21 @@
   addEventListener("DOMLinkChanged", reportIcon, true);
 
   function state(paintX = 0, paintY = 0) {
-    const root = content.document?.scrollingElement ||
-      content.document?.documentElement;
+    // Geometry getters can start layout before render-blocking CSS arrives.
+    // Publish document identity immediately, but measure only after a paint.
+    const root = firstPaint && (content.document?.scrollingElement ||
+      content.document?.documentElement);
     let presShellId = 0;
     let viewId = "0";
     try {
-      presShellId = content.windowUtils.getPresShellId();
+      if (firstPaint) presShellId = content.windowUtils.getPresShellId();
       if (root) {
         viewId = content.windowUtils.getViewId(root).toString();
       }
     } catch (error) {
       // The initial about:blank may not have a root scroll frame yet.
     }
-    const viewport = content.visualViewport;
+    const viewport = firstPaint ? content.visualViewport : null;
     let innerWindowId = "0";
     try {
       innerWindowId = String(content.windowGlobalChild?.innerWindowId || 0);
@@ -184,16 +186,16 @@
       firstPaintY: paintY,
       scrollWidth: Math.max(0, root?.scrollWidth || 0),
       scrollHeight: Math.max(0, root?.scrollHeight || 0),
-      scrollX: Math.trunc(content.scrollX),
-      scrollY: Math.trunc(content.scrollY),
+      scrollX: firstPaint ? Math.trunc(content.scrollX) : 0,
+      scrollY: firstPaint ? Math.trunc(content.scrollY) : 0,
       viewportX: Number.isFinite(viewport?.pageLeft)
-        ? viewport.pageLeft : content.scrollX,
+        ? viewport.pageLeft : (firstPaint ? content.scrollX : 0),
       viewportY: Number.isFinite(viewport?.pageTop)
-        ? viewport.pageTop : content.scrollY,
+        ? viewport.pageTop : (firstPaint ? content.scrollY : 0),
       viewportWidth: Math.max(0, Number.isFinite(viewport?.width)
-        ? viewport.width : content.innerWidth),
+        ? viewport.width : (firstPaint ? content.innerWidth : 0)),
       viewportHeight: Math.max(0, Number.isFinite(viewport?.height)
-        ? viewport.height : content.innerHeight),
+        ? viewport.height : (firstPaint ? content.innerHeight : 0)),
       presShellId,
       viewId,
     });
@@ -228,6 +230,7 @@
   // BFCache restoration can revive a context with an older text scale.
   addEventListener("pageshow", event => {
     if (event.target === content.document) {
+      if (event.persisted) firstPaint = true;
       state();
     }
   }, true);
@@ -250,6 +253,7 @@
       applyDynamicToolbarHeight();
       state(Math.trunc(event.boundingClientRect?.x || 0),
             Math.trunc(event.boundingClientRect?.y || 0));
+      reportOrientation(true);
     }
     if (orientationPaintPending &&
         event.transactionId > orientationPaintBaseline) {

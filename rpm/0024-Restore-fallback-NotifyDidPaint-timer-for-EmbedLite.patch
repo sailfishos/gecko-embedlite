@@ -14,7 +14,7 @@ acknowledgement and presentation teardown.
  2 files changed, 127 insertions(+), 2 deletions(-)
 
 diff --git a/layout/base/nsPresContext.cpp b/layout/base/nsPresContext.cpp
-index 7e54b054a3ae..333a5fb72123 100644
+index db1016e43e9c..9daf31777e3e 100644
 --- a/layout/base/nsPresContext.cpp
 +++ b/layout/base/nsPresContext.cpp
 @@ -33,6 +33,9 @@
@@ -167,10 +167,10 @@ index 7e54b054a3ae..333a5fb72123 100644
    if (!mWillPaintFallbackEvent.IsPending()) {
      mWillPaintFallbackEvent = MakeRefPtr<RunWillPaintObservers>(this);
 diff --git a/layout/base/nsPresContext.h b/layout/base/nsPresContext.h
-index 5f27c288fd02..3768423fe6b6 100644
+index 81a9b2938022..ef3157dd3b83 100644
 --- a/layout/base/nsPresContext.h
 +++ b/layout/base/nsPresContext.h
-@@ -1458,8 +1458,23 @@ class nsPresContext : public nsISupports,
+@@ -1468,8 +1468,23 @@ class nsPresContext : public nsISupports,
  class nsRootPresContext final : public nsPresContext {
   public:
    nsRootPresContext(mozilla::dom::Document* aDocument, nsPresContextType aType);
@@ -194,7 +194,7 @@ index 5f27c288fd02..3768423fe6b6 100644
    /**
     * Add a runnable that will get called before the next paint. They will get
     * run eventually even if painting doesn't happen. They might run well before
-@@ -1494,6 +1509,17 @@ class nsRootPresContext final : public nsPresContext {
+@@ -1504,6 +1519,17 @@ class nsRootPresContext final : public nsPresContext {
  
    friend class nsPresContext;
  

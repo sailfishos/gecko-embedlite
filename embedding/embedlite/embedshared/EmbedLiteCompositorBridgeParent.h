@@ -56,6 +56,8 @@ public:
   void ClearPlatformImage();
   bool AcquirePlatformFrame(const PlatformFrameToken& token,
                             const PlatformFrameCallback& callback);
+  bool AcquireLatestPlatformFrame(
+    uint64_t epoch, const PlatformFrameCallback& callback);
   bool ReleasePlatformFrame(const PlatformFrameRelease& release);
   bool SetPlatformFrameDeliveryEnabled(bool enabled);
   bool SetPlatformFrameListener(EmbedLitePlatformFrameListener* listener);
@@ -94,6 +96,9 @@ private:
     PlatformFrameState state;
   };
 
+  bool AcquirePlatformFrameInternal(const PlatformFrameToken& token,
+                                    bool latest,
+                                    const PlatformFrameCallback& callback);
   void EnsureSurfaceSizeFromWindow();
   void SchedulePlatformImageRetry();
   void MarkReadyPlatformFramesReleased();

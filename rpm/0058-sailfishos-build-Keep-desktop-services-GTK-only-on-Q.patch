@@ -34,7 +34,7 @@ index bb486ec1e411..42ca0fecc66a 100644
              "linux/UPowerClient.cpp",
          ]
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 7f3bc625681f..4fc3beef9c85 100644
+index 968f5dc7888b..8ae9e8086a60 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
 @@ -270,7 +270,7 @@
@@ -55,7 +55,7 @@ index 7f3bc625681f..4fc3beef9c85 100644
    printf(
        "  --dbus-service <launcher>  Run as DBus service for "
        "org.freedesktop.Application and\n"
-@@ -4796,7 +4796,7 @@ int XREMain::XRE_mainInit(bool* aExitFlag,
+@@ -4798,7 +4798,7 @@ int XREMain::XRE_mainInit(bool* aExitFlag,
      return 0;
    }
  

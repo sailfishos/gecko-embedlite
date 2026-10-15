@@ -10,7 +10,7 @@ video has no audio track, then recompute preload once metadata is known.
  1 file changed, 5 insertions(+)
 
 diff --git a/dom/media/mediaelement/HTMLMediaElement.cpp b/dom/media/mediaelement/HTMLMediaElement.cpp
-index aa7f010579c8..438295c8a84e 100644
+index 0cfda4c5f0e7..1198b2663a5e 100644
 --- a/dom/media/mediaelement/HTMLMediaElement.cpp
 +++ b/dom/media/mediaelement/HTMLMediaElement.cpp
 @@ -3294,6 +3294,8 @@ void HTMLMediaElement::UpdatePreloadAction(

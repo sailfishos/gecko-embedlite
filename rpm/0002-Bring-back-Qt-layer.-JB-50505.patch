@@ -561,7 +561,7 @@ index 000000000000..4432494acd25
 +../../../gecko-qt/dom/system/qt
 \ No newline at end of file
 diff --git a/gfx/2d/2D.h b/gfx/2d/2D.h
-index ca467753cbd1..2669738d670d 100644
+index b960c16271a9..f43ea0f7720f 100644
 --- a/gfx/2d/2D.h
 +++ b/gfx/2d/2D.h
 @@ -34,7 +34,7 @@
@@ -1477,7 +1477,7 @@ index 4ce81491b7be..fb93c31210e9 100644
  #ifdef XP_UNIX
  Result<Ok, LaunchError> PosixProcessLauncher::DoSetup() {
 diff --git a/layout/base/nsPresContext.cpp b/layout/base/nsPresContext.cpp
-index 10e71c54e9ef..7e54b054a3ae 100644
+index 9ce1d7dd9ff8..db1016e43e9c 100644
 --- a/layout/base/nsPresContext.cpp
 +++ b/layout/base/nsPresContext.cpp
 @@ -2156,6 +2156,11 @@ void nsPresContext::UserFontSetUpdated(gfxUserFontEntry* aUpdatedFont) {
@@ -1515,7 +1515,7 @@ index 1f9613b8cd93..7661db0fd79e 100644
        return true;
  #elif defined(XP_MACOSX)
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index d5f863b1082d..457facc254c7 100644
+index 1964b95528db..0979d08c9c4e 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -7768,7 +7768,7 @@
@@ -1763,7 +1763,7 @@ index 390b16041f35..b469578830e1 100644
      UNIFIED_SOURCES += [
          "nsNativeAppSupportUnix.cpp",
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 9f7bc0300111..7f3bc625681f 100644
+index 07c796105363..968f5dc7888b 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
 @@ -2,6 +2,12 @@
@@ -1806,7 +1806,7 @@ index 9f7bc0300111..7f3bc625681f 100644
    }
  
    SaveToEnv("MOZ_LAUNCHED_CHILD=1");
-@@ -5066,6 +5083,25 @@ int XREMain::XRE_mainStartup(bool* aExitFlag,
+@@ -5068,6 +5085,25 @@ int XREMain::XRE_mainStartup(bool* aExitFlag,
    }
  #endif /* XP_WIN */
  
@@ -1832,7 +1832,7 @@ index 9f7bc0300111..7f3bc625681f 100644
  #if defined(MOZ_WIDGET_GTK)
    // setup for private colormap.  Ideally we'd like to do this
    // in nsAppShell::Create, but we need to get in before gtk
-@@ -6593,6 +6629,10 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
+@@ -6598,6 +6634,10 @@ int XREMain::XRE_main(int argc, char* argv[], const BootstrapConfig& aConfig) {
    mProfileLock->Unlock();
    gProfileLock = nullptr;
  

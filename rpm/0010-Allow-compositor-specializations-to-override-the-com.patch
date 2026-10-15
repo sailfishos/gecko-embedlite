@@ -63,10 +63,10 @@ index b07e07dfb75e..cfb6de0b8aa7 100644
  
  }  // namespace layers
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.cpp b/gfx/layers/wr/WebRenderBridgeParent.cpp
-index 0eeb9ac9a7f8..516dfd47c6a1 100644
+index b96c244a9180..050068ea8abe 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.cpp
 +++ b/gfx/layers/wr/WebRenderBridgeParent.cpp
-@@ -3227,5 +3227,10 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
+@@ -3268,5 +3268,10 @@ WebRenderBridgeParentRef::~WebRenderBridgeParentRef() {
    MOZ_ASSERT(!mWebRenderBridge);
  }
  
@@ -78,7 +78,7 @@ index 0eeb9ac9a7f8..516dfd47c6a1 100644
  }  // namespace mozilla::layers
  #undef LOG
 diff --git a/gfx/layers/wr/WebRenderBridgeParent.h b/gfx/layers/wr/WebRenderBridgeParent.h
-index e54a1d267ee6..2cc7439d525a 100644
+index 1dddf29378d0..a32d5943cfa4 100644
 --- a/gfx/layers/wr/WebRenderBridgeParent.h
 +++ b/gfx/layers/wr/WebRenderBridgeParent.h
 @@ -205,6 +205,8 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,

@@ -223,7 +223,7 @@ index 28d16fa743ef..388cd66aafa5 100644
  void* RendererOGL::swgl() const { return mCompositor->swgl(); }
  
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index d783a87a172a..e1be4cebd552 100644
+index 26ab4cdd440d..779c188a989d 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
 @@ -8591,7 +8591,7 @@

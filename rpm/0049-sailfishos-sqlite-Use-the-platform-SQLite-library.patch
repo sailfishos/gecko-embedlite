@@ -23,7 +23,7 @@ configure define.
  config/external/sqlite/moz.build              | 23 +++++++-----
  storage/SQLiteMutex.h                         |  6 +--
  storage/moz.build                             | 20 ++++++++--
- storage/mozStorageConnection.cpp              | 37 +++++++++++++++++--
+ storage/mozStorageConnection.cpp              | 37 ++++++++++++++++---
  storage/mozStorageService.cpp                 | 19 +++++++++-
  storage/test/unit/test_storage_ext_fts5.js    | 36 ++++++++++--------
  third_party/sqlite3/ext/moz.build             | 19 +++++++---
@@ -33,7 +33,7 @@ configure define.
  toolkit/xre/AutoSQLiteLifetime.cpp            | 18 ++++++---
  toolkit/xre/moz.build                         |  2 +
  tools/@types/subs/AppConstants.sys.d.mts      |  2 +
- 16 files changed, 176 insertions(+), 50 deletions(-)
+ 16 files changed, 175 insertions(+), 51 deletions(-)
  create mode 100644 build/moz.configure/sqlite.configure
 
 diff --git a/browser/components/urlbar/private/SuggestBackendRust.sys.mjs b/browser/components/urlbar/private/SuggestBackendRust.sys.mjs
@@ -205,7 +205,7 @@ index aa0e82f0d9f7..07646fc0c7ff 100644
      DEFINES["MOZ_FOLD_LIBS"] = True
  
 diff --git a/storage/mozStorageConnection.cpp b/storage/mozStorageConnection.cpp
-index a289eee7bc67..062186bf4226 100644
+index 1268f31cd905..c7f6e2995f32 100644
 --- a/storage/mozStorageConnection.cpp
 +++ b/storage/mozStorageConnection.cpp
 @@ -47,6 +47,10 @@
@@ -219,7 +219,7 @@ index a289eee7bc67..062186bf4226 100644
  #include "mozilla/Assertions.h"
  #include "mozilla/Logging.h"
  #include "mozilla/Printf.h"
-@@ -1416,6 +1420,13 @@ nsresult Connection::initializeInternal() {
+@@ -1417,13 +1421,18 @@ nsresult Connection::initializeInternal() {
      return convertResultCode(srv);
    }
  
@@ -228,12 +228,18 @@ index a289eee7bc67..062186bf4226 100644
 +  if (srv != SQLITE_OK) {
 +    return convertResultCode(srv);
 +  }
-+#endif
-+
-   // Register our built-in SQL functions.
-   srv = registerFunctions(mDBConn);
-   if (srv != SQLITE_OK) {
-@@ -3037,11 +3048,13 @@ Connection::LoadExtension(const nsACString& aExtensionName,
++#elif !defined(ANDROID) && !defined(HAVE_64BIT_BUILD)
+   // obfsvfs only encrypts the main database, rollback journal and WAL. SQLite
+   // otherwise spills statement subjournals, sorter runs and temp tables to
+   // plaintext files on builds without an in-memory SQLITE_TEMP_STORE default,
+   // so keep all temporary storage in memory for encrypted databases. The
+   // condition mirrors the SQLITE_TEMP_STORE block in
+   // third_party/sqlite3/src/moz.build.
+-#if !defined(ANDROID) && !defined(HAVE_64BIT_BUILD)
+   if (mDatabaseEncrypted) {
+     srv = executeSql(mDBConn,
+                      MOZ_STORAGE_UNIQUIFY_QUERY_STR "PRAGMA temp_store = 2;");
+@@ -3054,11 +3063,13 @@ Connection::LoadExtension(const nsACString& aExtensionName,
      return NS_ERROR_NOT_INITIALIZED;
    }
  
@@ -247,7 +253,7 @@ index a289eee7bc67..062186bf4226 100644
  
    // Track the loaded extension for later connection cloning operations.
    {
-@@ -3056,13 +3069,11 @@ Connection::LoadExtension(const nsACString& aExtensionName,
+@@ -3073,13 +3084,11 @@ Connection::LoadExtension(const nsACString& aExtensionName,
      }
    }
  
@@ -263,7 +269,7 @@ index a289eee7bc67..062186bf4226 100644
         callback = RefPtr(aCallback)]() mutable {
          MOZ_ASSERT(
              !NS_IsMainThread() ||
-@@ -3070,6 +3081,23 @@ Connection::LoadExtension(const nsACString& aExtensionName,
+@@ -3087,6 +3096,23 @@ Connection::LoadExtension(const nsACString& aExtensionName,
                   eventTargetOpenedOn == GetMainThreadSerialEventTarget()),
              "Should happen on main-thread only for synchronous connections "
              "opened on the main thread");
@@ -287,7 +293,7 @@ index a289eee7bc67..062186bf4226 100644
  #ifdef MOZ_FOLD_LIBS
          int srv = ::sqlite3_load_extension(mDBConn,
                                             MOZ_DLL_PREFIX "nss3" MOZ_DLL_SUFFIX,
-@@ -3078,6 +3106,7 @@ Connection::LoadExtension(const nsACString& aExtensionName,
+@@ -3095,6 +3121,7 @@ Connection::LoadExtension(const nsACString& aExtensionName,
          int srv = ::sqlite3_load_extension(
              mDBConn, MOZ_DLL_PREFIX "mozsqlite3" MOZ_DLL_SUFFIX,
              entryPoint.get(), nullptr);

@@ -166,7 +166,13 @@ public:
   MOZ_EXPORT bool AcquirePlatformFrame(
     const PlatformFrameToken& token,
     const PlatformFrameCallback& callback);
-  // Release is valid only after AcquirePlatformFrame returns true. Fence
+  // Atomically pin the newest ready frame in the notified epoch. Notifications
+  // are availability hints: the callback may receive a newer sequence. Release
+  // the returned descriptor token, not the notification token. An obsolete
+  // epoch, disabled stream or exhausted lease budget returns false.
+  MOZ_EXPORT bool AcquireLatestPlatformFrame(
+    uint64_t epoch, const PlatformFrameCallback& callback);
+  // Release is valid only after either acquisition returns true. Fence
   // ownership transfers to Gecko only when this returns true. NoHandle
   // requires a null handle and means that no GPU reads remain outstanding.
   // An EGLSync must be created on the compatible EGLDisplay after the last
