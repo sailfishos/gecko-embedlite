@@ -66,6 +66,8 @@ public:
   void ClearPlatformImage();
   bool AcquirePlatformFrame(const PlatformFrameToken& token,
                             const PlatformFrameCallback& callback);
+  bool AcquireLatestPlatformFrame(
+    uint64_t epoch, const PlatformFrameCallback& callback);
   bool ReleasePlatformFrame(const PlatformFrameRelease& release);
   bool SetPlatformFrameDeliveryEnabled(bool enabled);
   bool SetPlatformFrameListener(EmbedLitePlatformFrameListener* listener);

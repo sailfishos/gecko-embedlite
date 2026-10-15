@@ -283,6 +283,12 @@ bool EmbedLiteWindowParent::AcquirePlatformFrame(
   return mCompositor && mCompositor->AcquirePlatformFrame(token, callback);
 }
 
+bool EmbedLiteWindowParent::AcquireLatestPlatformFrame(
+    uint64_t epoch, const PlatformFrameCallback& callback)
+{
+  return mCompositor && mCompositor->AcquireLatestPlatformFrame(epoch, callback);
+}
+
 bool EmbedLiteWindowParent::ReleasePlatformFrame(
     const PlatformFrameRelease& release)
 {

@@ -116,6 +116,12 @@ bool EmbedLiteWindow::AcquirePlatformFrame(
   return mWindowParent->AcquirePlatformFrame(token, callback);
 }
 
+bool EmbedLiteWindow::AcquireLatestPlatformFrame(
+    uint64_t epoch, const PlatformFrameCallback& callback)
+{
+  return mWindowParent->AcquireLatestPlatformFrame(epoch, callback);
+}
+
 bool EmbedLiteWindow::ReleasePlatformFrame(
     const PlatformFrameRelease& release)
 {

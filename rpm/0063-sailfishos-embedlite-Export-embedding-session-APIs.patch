@@ -7,14 +7,14 @@ ESR153 restricts libxul exports with an explicit symbol list. Export the
 EmbedLite accessor, tokenized frame methods, and chrome, tab, input, and
 content session entry points used by the external Qt embedder.
 ---
- toolkit/library/libxul.symbols | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ toolkit/library/libxul.symbols | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
 diff --git a/toolkit/library/libxul.symbols b/toolkit/library/libxul.symbols
-index e63e3e74426b..4b7cd651d818 100644
+index e63e3e74426b..7010cb856fbe 100644
 --- a/toolkit/library/libxul.symbols
 +++ b/toolkit/library/libxul.symbols
-@@ -1,4 +1,17 @@
+@@ -1,4 +1,18 @@
  XRE_GetBootstrap
 +XRE_GetEmbedLite
 +#if defined(MOZ_EMBEDLITE) && defined(XP_LINUX) && !defined(ANDROID)
@@ -25,6 +25,7 @@ index e63e3e74426b..4b7cd651d818 100644
 +_ZN7mozilla9embedlite15EmbedLiteWindow21GetChromeInputSessionE*
 +_ZN7mozilla9embedlite15EmbedLiteWindow19GetChromeTabSessionE*
 +_ZN7mozilla9embedlite15EmbedLiteWindow20AcquirePlatformFrame*
++_ZN7mozilla9embedlite15EmbedLiteWindow26AcquireLatestPlatformFrame*
 +_ZN7mozilla9embedlite15EmbedLiteWindow20ReleasePlatformFrame*
 +_ZN7mozilla9embedlite15EmbedLiteWindow24SetPlatformFrameListener*
 +_ZN7mozilla9embedlite15EmbedLiteWindow31SetPlatformFrameDeliveryEnabled*

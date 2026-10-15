@@ -632,8 +632,24 @@ EmbedLiteCompositorBridgeParent::AcquirePlatformFrame(
   const PlatformFrameToken& token,
   const PlatformFrameCallback& callback)
 {
+  return AcquirePlatformFrameInternal(token, false, callback);
+}
+
+bool
+EmbedLiteCompositorBridgeParent::AcquireLatestPlatformFrame(
+  uint64_t epoch, const PlatformFrameCallback& callback)
+{
+  return AcquirePlatformFrameInternal({epoch, 0}, true, callback);
+}
+
+bool
+EmbedLiteCompositorBridgeParent::AcquirePlatformFrameInternal(
+  const PlatformFrameToken& token,
+  bool latest,
+  const PlatformFrameCallback& callback)
+{
   LOGT("EmbedLiteCompositorBridgeParent::AcquirePlatformFrame");
-  if (!token.IsValid() || !callback) {
+  if (!token.epoch || (!latest && !token.IsValid()) || !callback) {
     return false;
   }
 
@@ -643,13 +659,20 @@ EmbedLiteCompositorBridgeParent::AcquirePlatformFrame(
   PlatformFrameDescriptor descriptor;
   {
     MutexAutoLock imageLock(mPlatformImageMutex);
+    // Selection and pinning share the publication lock: a newer publication
+    // can replace Ready records, but cannot supersede an Acquiring record.
+    if (latest && (!mPlatformFrameDeliveryEnabled ||
+                   token.epoch != mPlatformImageGeneration)) {
+      return false;
+    }
+    const PlatformFrameToken selected = latest ? mLatestPlatformFrameToken : token;
     auto found = mPlatformFrames.end();
     size_t outstanding = 0;
     for (auto it = mPlatformFrames.begin(); it != mPlatformFrames.end(); ++it) {
       if (it->state != PlatformFrameState::Ready) {
         ++outstanding;
       }
-      if (it->token == token) {
+      if (it->token == selected && (!latest || it->token.epoch == token.epoch)) {
         found = it;
       }
     }
@@ -679,7 +702,7 @@ EmbedLiteCompositorBridgeParent::AcquirePlatformFrame(
     {
       MutexAutoLock imageLock(mPlatformImageMutex);
       for (PlatformFrameRecord& frame : mPlatformFrames) {
-        if (frame.token == token &&
+        if (frame.token == descriptor.token &&
             frame.state == PlatformFrameState::Acquiring) {
           frame.state = PlatformFrameState::Acquired;
           acquired = true;
@@ -697,7 +720,7 @@ EmbedLiteCompositorBridgeParent::AcquirePlatformFrame(
     {
       MutexAutoLock imageLock(mPlatformImageMutex);
       for (PlatformFrameRecord& frame : mPlatformFrames) {
-        if (!(frame.token == token) ||
+        if (!(frame.token == descriptor.token) ||
             frame.state != PlatformFrameState::Acquiring) {
           continue;
         }
