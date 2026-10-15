@@ -55,6 +55,7 @@ Release:    1
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/gecko-dev
 Source0:    %{name}-%{version}.tar.bz2
+Provides: gecko-embedlite-site-data-cleanup-api = 1
 Provides:   xulrunner-qt5 = %{version}-%{release}
 Obsoletes:  xulrunner-qt5 < 154
 Obsoletes:  embedlite-components-qt5 < 3
@@ -141,6 +142,8 @@ Patch81:    0081-Restore-native-colour-scheme-fallback-for-ambience-m.patch
 Patch82:    0082-sailfishos-Suspend-hidden-video-while-retaining-background-audio.patch
 Patch83:    0083-sailfishos-Notify-embedders-when-the-main-media-controller-changes.patch
 Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.patch
+Patch85:    0085-sailfishos-Delegate-external-URLs-to-the-asynchronous.patch
+Patch86:    0086-sailfishos-Fix-external-protocol-permissions-and-fallback-retries.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0
