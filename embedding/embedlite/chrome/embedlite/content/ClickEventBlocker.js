@@ -7,11 +7,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-var BrowserUtils = ChromeUtils.importESModule(
-  "resource://gre/modules/BrowserUtils.sys.mjs"
-).BrowserUtils;
-var makeURI = BrowserUtils.makeURI;
-
 var ClickEventBlocker = global.ClickEventBlocker || {};
 
 Object.assign(ClickEventBlocker, {
@@ -75,8 +70,8 @@ Object.assign(ClickEventBlocker, {
       return null;
     const securityManager = Services.scriptSecurityManager;
     try {
-      var targetURI = makeURI(href);
-      securityManager.checkSameOriginURI(referrerURI, targetURI, false);
+      var targetURI = Services.io.newURI(href);
+      securityManager.checkSameOriginURI(referrerURI, targetURI, false, false);
       return true;
     } catch (e) { }
     return false;

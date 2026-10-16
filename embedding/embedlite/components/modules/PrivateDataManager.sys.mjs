@@ -133,12 +133,25 @@ PrivateDataManager.prototype = {
     switch (aTopic) {
       case "app-startup": {
         Services.obs.addObserver(this, "clear-private-data", true);
+        Services.obs.addObserver(this, "clear-site-data-on-exit", true);
         Services.obs.addObserver(this, "get-cache-size", true);
         Services.obs.addObserver(this, "get-site-data-size", true);
         break;
       }
       case "clear-private-data": {
         this.clearPrivateData(aData);
+        break;
+      }
+      case "clear-site-data-on-exit": {
+        const flags = Ci.nsIClearDataService.CLEAR_COOKIES | Ci.nsIClearDataService.CLEAR_DOM_STORAGES;
+        try {
+          Services.clearData.deleteData(flags, failedFlags => {
+            sendResult("site-data-cleared", { requestId: aData, failedFlags });
+          });
+        } catch (error) {
+          Cu.reportError(error);
+          sendResult("site-data-cleared", { requestId: aData, failedFlags: flags });
+        }
         break;
       }
       case "get-cache-size": {
