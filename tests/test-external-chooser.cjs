@@ -2,6 +2,36 @@
 // Run with Node against the managed, patched source tree.
 const fs = require("fs");
 const assert = require("assert").strict;
+// Exercise startup before the chooser: a custom intent protocol would bypass it.
+const vm = require("vm");
+const components = require("path").join(__dirname, "../embedding/embedlite/components");
+const helper = fs.readFileSync(require("path").join(components,
+  "modules/EmbedLiteGlobalHelper.sys.mjs"), "utf8");
+const observer = helper.slice(helper.indexOf("  observe: function"),
+  helper.indexOf("  _migratePreferences()"));
+const processScripts = [];
+const startup = {
+  Logger: { debug() {} },
+  encodeURIComponent,
+  Services: {
+    obs: { addObserver() {} },
+    ppmm: { loadProcessScript(url) { processScripts.push(url); } },
+  },
+};
+vm.runInNewContext("globalThis.helper = {" + observer + "};", startup);
+startup.helper.observe(null, "app-startup", null);
+for (const script of processScripts.filter(url => url.startsWith("data:"))) {
+  vm.runInNewContext(decodeURIComponent(script.slice(script.indexOf(",") + 1)), {
+    Services: { io: { registerProtocolHandler(scheme) {
+      assert.notEqual(scheme, "intent", "Intent URLs must reach the external chooser");
+    } } },
+    Cc: new Proxy({}, { get: () => ({ createInstance: () => ({}) }) }),
+    Ci: { nsIProtocolHandler: { URI_LOADABLE_BY_ANYONE: 64 } },
+  });
+}
+assert(!fs.readFileSync(require("path").join(components, "components.conf"), "utf8")
+  .includes("@mozilla.org/network/protocol;1?name=intent"),
+  "Do not register an XPCOM intent protocol ahead of the external chooser");
 const sourceRoot = process.env.GECKO_SOURCE_DIR || require("path").join(__dirname, "../gecko-dev");
 const path = require("path").join(sourceRoot,
   "toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs");
@@ -83,6 +113,20 @@ function response(outcome, fallback = "", remember = false) {
       assert.equal(sent.length, before + 1, scheme);
       response("declined");
       await pending;
+    }
+  });
+  await check("Maps intent reaches the chooser intact before dispatch or fallback", async () => {
+    const maps = { scheme: "intent", spec: "intent://www.google.com/maps/#Intent;scheme=https;"
+      + "package=com.google.android.apps.maps;S.browser_fallback_url="
+      + "https%3A%2F%2Fwww.google.com%2Fmaps%2F;end;" };
+    for (const outcome of ["dispatched", "fallback"]) {
+      const before = loaded.length;
+      const pending = chooser.handleURI({}, maps, principal, context(), false, true);
+      assert.equal(sent[sent.length - 1].url, maps.spec);
+      assert.equal(loaded.length, before, "Do not follow fallback before the embedder replies");
+      response(outcome, "https://www.google.com/maps/");
+      await pending;
+      assert.equal(loaded.length, before + (outcome === "fallback" ? 1 : 0));
     }
   });
   await check("fallback retains its triggering principal", async () => {
