@@ -20,9 +20,11 @@ function startProfile(defaultValue, savedPrefs) {
   let saves = 0;
   const observers = new Map();
   const scope = {
-    Components: { classes: {}, interfaces: {}, results: {}, ID: value => value },
+    Components: { classes: {
+      "@mozilla.org/updates/timer-manager;1": { getService() { return { observe() {} }; } }
+    }, interfaces: {}, results: {}, ID: value => value },
     ChromeUtils: {
-      importESModule() { return { LoginManagerParent: {} }; },
+      importESModule() { return { LoginManagerParent: {}, RemoteSecuritySettings: { init() {} } }; },
       registerWindowActor() {},
       unregisterWindowActor() {},
       generateQI() { return () => {}; }
@@ -30,7 +32,10 @@ function startProfile(defaultValue, savedPrefs) {
     Services: {
       scriptloader: { loadSubScript(url, target) { target.Logger = { debug() {} }; } },
       ppmm: { loadProcessScript() {} },
-      obs: { addObserver(observer, topic) { observers.set(topic, observer); } },
+      obs: {
+        addObserver(observer, topic) { observers.set(topic, observer); },
+        removeObserver(observer, topic) { assert.equal(observers.get(topic), observer); observers.delete(topic); }
+      },
       prefs: {
         getDefaultBranch() {
           return { setBoolPref(key, value) { defaults.set(key, value); },

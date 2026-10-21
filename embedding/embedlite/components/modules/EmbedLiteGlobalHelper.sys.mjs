@@ -187,7 +187,21 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
       case "profile-after-change": {
+        Services.obs.removeObserver(this, "profile-after-change");
         this._migratePreferences();
+
+        // EmbedLite does not run BrowserGlue or GeckoView startup. Register the
+        // signed security settings consumers before their first scheduled poll.
+        const { RemoteSecuritySettings } = ChromeUtils.importESModule(
+          "resource://gre/modules/psm/RemoteSecuritySettings.sys.mjs"
+        );
+        RemoteSecuritySettings.init();
+
+        // GeckoLoader sends this notification directly, without XRE's startup
+        // notifier that starts services in the profile-after-change category.
+        // Start the shared timer manager so Remote Settings and UA updates run.
+        Cc["@mozilla.org/updates/timer-manager;1"].getService(Ci.nsIObserver)
+          .observe(aSubject, aTopic, aData);
         break;
       }
       case "xpcom-shutdown": {

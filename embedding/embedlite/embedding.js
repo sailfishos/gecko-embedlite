@@ -278,9 +278,11 @@ pref("full-screen-api.enabled", true);
 // running in actual Metro mode, as the widget will already be fullscreen then.
 pref("full-screen-api.ignore-widgets", true);
 
-// Disable telemetry services explicitly.
+// Disable telemetry services and Glean uploads.
 pref("toolkit.telemetry.unified", false);
 pref("toolkit.telemetry.enabled", false);
+pref("datareporting.healthreport.uploadEnabled", false);
+pref("datareporting.usage.uploadEnabled", false);
 
 // Align security prefs from Android FF
 // Block insecure active content on https pages
