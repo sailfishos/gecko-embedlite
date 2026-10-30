@@ -98,13 +98,46 @@ InputMethodHandler.prototype = {
     }
 
     try {
+      let surroundingText = aElement.value;
+      let cursorPosition = aElement.selectionStart;
+      let anchorPosition = aElement.selectionEnd;
+      if (cursorPosition === null) {
+        // An email input has no selection API, and its value is sanitized, so
+        // the text and the offsets both come from the editor, which holds what
+        // is shown.
+        let root = aElement.editor.rootElement;
+        let selection = aElement.editor.selection;
+        surroundingText = root.textContent;
+        cursorPosition = this._editorOffset(root, selection.focusNode, selection.focusOffset);
+        anchorPosition = this._editorOffset(root, selection.anchorNode, selection.anchorOffset);
+      }
       sendAsyncMessage("InputMethodHandler:SetInputContext",
-                       {surroundingText: aElement.value,
-                        cursorPosition: aElement.selectionStart,
-                        anchorPosition: aElement.selectionEnd});
+                       {surroundingText: surroundingText,
+                        cursorPosition: cursorPosition,
+                        anchorPosition: anchorPosition});
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);
     }
+  },
+
+  // A selection point of a single-line editor sits in one of its text nodes
+  // or in the root itself, between child nodes.
+  _editorOffset: function(aRoot, aNode, aOffset) {
+    let offset = 0;
+    let children = aRoot.childNodes;
+    for (let i = 0; i < children.length; ++i) {
+      if (aNode === aRoot && i === aOffset) {
+        return offset;
+      }
+      let child = children[i];
+      if (child === aNode) {
+        return offset + aOffset;
+      }
+      if (child.nodeType === child.TEXT_NODE) {
+        offset += child.length;
+      }
+    }
+    return aNode === aRoot ? offset : 0;
   },
 
   _resetInputContext: function(aElement) {
