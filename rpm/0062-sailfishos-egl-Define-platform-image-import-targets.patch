@@ -110,7 +110,7 @@ index 55d02625b194..4c5205b1a238 100644
      mAvailableExtensions[UnderlyingValue(aKnownExtension)] = false;
    }
 diff --git a/gfx/gl/SharedSurfaceEGL.cpp b/gfx/gl/SharedSurfaceEGL.cpp
-index 9abce8748eca..2fb27052823a 100644
+index 9d0c3726b194..bb9648f869f9 100644
 --- a/gfx/gl/SharedSurfaceEGL.cpp
 +++ b/gfx/gl/SharedSurfaceEGL.cpp
 @@ -67,15 +67,24 @@ UniquePtr<SharedSurface_EGLImage> SharedSurface_EGLImage::Create(

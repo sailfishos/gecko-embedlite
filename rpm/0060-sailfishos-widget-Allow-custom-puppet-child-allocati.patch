@@ -30,10 +30,10 @@ index 033e55b70ed8..db346dfc065b 100644
  
    if (!widget) {
 diff --git a/widget/nsIWidget.h b/widget/nsIWidget.h
-index ca248338ae6c..f3e0d4ef268a 100644
+index 8c7e64041c03..3d021d9da11a 100644
 --- a/widget/nsIWidget.h
 +++ b/widget/nsIWidget.h
-@@ -2131,6 +2131,13 @@ class nsIWidget : public nsSupportsWeakReference {
+@@ -2143,6 +2143,13 @@ class nsIWidget : public nsSupportsWeakReference {
    static already_AddRefed<nsIWidget> CreatePuppetWidget(
        BrowserChild* aBrowserChild);
  

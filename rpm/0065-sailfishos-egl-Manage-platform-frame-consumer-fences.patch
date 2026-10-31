@@ -9,7 +9,7 @@ Subject: Manage platform frame consumer fences
  2 files changed, 50 insertions(+)
 
 diff --git a/gfx/gl/SharedSurfaceEGL.cpp b/gfx/gl/SharedSurfaceEGL.cpp
-index 2fb27052823a..66466364a1db 100644
+index bb9648f869f9..4c0756844209 100644
 --- a/gfx/gl/SharedSurfaceEGL.cpp
 +++ b/gfx/gl/SharedSurfaceEGL.cpp
 @@ -148,6 +148,46 @@ bool SharedSurface_EGLImage::IsBufferAvailable() const {

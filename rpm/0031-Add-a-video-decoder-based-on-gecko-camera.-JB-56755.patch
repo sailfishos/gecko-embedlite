@@ -133,10 +133,10 @@ index 1bd4af56f2a2..cc81530596a4 100644
  
  # Add libFuzzer configuration directives
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index 0979d08c9c4e..cd9517130362 100644
+index 1d3c191549e2..ebae78e8e9cc 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
-@@ -12578,6 +12578,19 @@
+@@ -12560,6 +12560,19 @@
      mirror: always
  #endif  # ANDROID
  

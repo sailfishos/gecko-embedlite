@@ -38,10 +38,10 @@ index 4b82051b6fee..27086dc4424e 100644
  }
  
 diff --git a/dom/ipc/BrowserParent.cpp b/dom/ipc/BrowserParent.cpp
-index ed6b784a8319..cedf4294be63 100644
+index 7efb717cde78..bd340ee33494 100644
 --- a/dom/ipc/BrowserParent.cpp
 +++ b/dom/ipc/BrowserParent.cpp
-@@ -3791,6 +3791,13 @@ void BrowserParent::SetRenderLayers(bool aEnabled) {
+@@ -3807,6 +3807,13 @@ void BrowserParent::SetRenderLayers(bool aEnabled) {
  
  void BrowserParent::SetRenderLayersInternal(bool aEnabled) {
    (void)SendRenderLayers(aEnabled);

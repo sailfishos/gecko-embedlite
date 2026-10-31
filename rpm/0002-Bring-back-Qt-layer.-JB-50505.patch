@@ -934,7 +934,7 @@ index cd5a7867e411..c2245eb9bc2c 100644
    UniquePtr<SandboxPolicy> policy;
  
 diff --git a/gfx/thebes/gfxFont.h b/gfx/thebes/gfxFont.h
-index e932d8ccbe5a..cda7186bd9ff 100644
+index a6570bbfb5e0..9d7f639bdb30 100644
 --- a/gfx/thebes/gfxFont.h
 +++ b/gfx/thebes/gfxFont.h
 @@ -83,7 +83,7 @@ typedef struct _cairo_scaled_font cairo_scaled_font_t;
@@ -1477,7 +1477,7 @@ index 4ce81491b7be..fb93c31210e9 100644
  #ifdef XP_UNIX
  Result<Ok, LaunchError> PosixProcessLauncher::DoSetup() {
 diff --git a/layout/base/nsPresContext.cpp b/layout/base/nsPresContext.cpp
-index 9ce1d7dd9ff8..db1016e43e9c 100644
+index 763371f3d8d6..3e34195589b3 100644
 --- a/layout/base/nsPresContext.cpp
 +++ b/layout/base/nsPresContext.cpp
 @@ -2156,6 +2156,11 @@ void nsPresContext::UserFontSetUpdated(gfxUserFontEntry* aUpdatedFont) {
@@ -1515,10 +1515,10 @@ index 1f9613b8cd93..7661db0fd79e 100644
        return true;
  #elif defined(XP_MACOSX)
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index 1964b95528db..0979d08c9c4e 100644
+index ce7b15fbe97b..1d3c191549e2 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
-@@ -7768,7 +7768,7 @@
+@@ -7750,7 +7750,7 @@
    value: false
    mirror: always
  
@@ -1527,7 +1527,7 @@ index 1964b95528db..0979d08c9c4e 100644
    # -1 = disabled (no preblend, original behavior)
    #  0 = sRGB transfer
    # >0 = value/100.0 exponent
-@@ -7793,7 +7793,7 @@
+@@ -7775,7 +7775,7 @@
      mirror: always
  #endif
  
@@ -1587,7 +1587,7 @@ index a26725ead2f7..b9d2d8e0d707 100644
    "win",
  #elif XP_MACOSX
 diff --git a/toolkit/moz.build b/toolkit/moz.build
-index 1d4006082b75..be177daa006b 100644
+index 7935cafbaac2..393fac67b03d 100644
 --- a/toolkit/moz.build
 +++ b/toolkit/moz.build
 @@ -54,6 +54,8 @@ if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
@@ -1598,7 +1598,7 @@ index 1d4006082b75..be177daa006b 100644
 +    DIRS += ["system/unixproxy"]
  elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
      DIRS += [
-         "mozapps/macos-frameworks",
+         "mozapps/dmgInstallHelper",
 diff --git a/toolkit/moz.configure b/toolkit/moz.configure
 index 593f8b9b9cfc..9f47a04e25be 100644
 --- a/toolkit/moz.configure
@@ -1735,7 +1735,7 @@ index f7ddee71d2a7..6b27a768b056 100644
  elif app == "mobile/android":
      DIRS += ["mobile"]
 diff --git a/toolkit/xre/moz.build b/toolkit/xre/moz.build
-index 390b16041f35..b469578830e1 100644
+index 19215efcb4cc..e968885275d0 100644
 --- a/toolkit/xre/moz.build
 +++ b/toolkit/xre/moz.build
 @@ -101,6 +101,23 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "uikit":
@@ -1763,7 +1763,7 @@ index 390b16041f35..b469578830e1 100644
      UNIFIED_SOURCES += [
          "nsNativeAppSupportUnix.cpp",
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 07c796105363..968f5dc7888b 100644
+index 83be944a364a..05eddbc64c8c 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
 @@ -2,6 +2,12 @@
