@@ -744,7 +744,7 @@ index ad9e110215f6..55d02625b194 100644
    std::shared_ptr<EglDisplay> DefaultDisplay(nsACString* const out_failureId);
  
 diff --git a/gfx/gl/SharedSurfaceEGL.cpp b/gfx/gl/SharedSurfaceEGL.cpp
-index 1a2dc57ba69e..9abce8748eca 100644
+index db5b0b618849..9d0c3726b194 100644
 --- a/gfx/gl/SharedSurfaceEGL.cpp
 +++ b/gfx/gl/SharedSurfaceEGL.cpp
 @@ -24,9 +24,15 @@ namespace gl {

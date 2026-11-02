@@ -64,7 +64,7 @@ EmbedLite frames in order to publish the completed offscreen image.
  create mode 100644 widget/EmbedLiteCompositorWidget.h
 
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 7cef0252a586..28401071835d 100644
+index 9f7e47bb9836..c2d3fb15bb83 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -156,6 +156,8 @@
@@ -84,7 +84,7 @@ index 7cef0252a586..28401071835d 100644
        mHeaderData(nullptr),
        mLanguageFromCharset(nullptr),
        mServoRestyleRootDirtyBits(0),
-@@ -11456,6 +11459,42 @@ ViewportMetaData Document::GetViewportMetaData() const {
+@@ -11454,6 +11457,42 @@ ViewportMetaData Document::GetViewportMetaData() const {
                                         : ViewportMetaData();
  }
  
@@ -128,7 +128,7 @@ index 7cef0252a586..28401071835d 100644
      const ViewportMetaData& aViewportMetaData) {
    if (aViewportMetaData.mInteractiveWidgetMode.IsEmpty()) {
 diff --git a/dom/base/Document.h b/dom/base/Document.h
-index 4ac0e9d0041a..be609439fe0c 100644
+index c558b7b36ce1..51d4b7a975c1 100644
 --- a/dom/base/Document.h
 +++ b/dom/base/Document.h
 @@ -1364,6 +1364,9 @@ class Document : public nsINode,
@@ -141,7 +141,7 @@ index 4ac0e9d0041a..be609439fe0c 100644
    /**
     * True iff this doc will ignore manual character encoding overrides.
     */
-@@ -5610,6 +5613,10 @@ class Document : public nsINode,
+@@ -5611,6 +5614,10 @@ class Document : public nsINode,
    // https://drafts.csswg.org/css-viewport/#interactive-widget-section
    dom::InteractiveWidget mInteractiveWidgetMode;
  
@@ -153,7 +153,7 @@ index 4ac0e9d0041a..be609439fe0c 100644
    // ParentDocument edge, then releases the held reference to the document.
    struct ClearParentDocumentDeleter {
 diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
-index b35f948b94ed..759202da88ae 100644
+index 73ffc2e9b1f2..b25bbc96aae1 100644
 --- a/dom/base/nsDOMWindowUtils.cpp
 +++ b/dom/base/nsDOMWindowUtils.cpp
 @@ -486,6 +486,15 @@ nsDOMWindowUtils::GetViewportFitInfo(nsAString& aViewportFit) {
@@ -263,7 +263,7 @@ index 000000000000..b51d178c9ec4
 +</body>
 +</html>
 diff --git a/dom/interfaces/base/nsIDOMWindowUtils.idl b/dom/interfaces/base/nsIDOMWindowUtils.idl
-index 8c073636aaa1..e965e697c5c7 100644
+index 27bf09c7638a..894bd4c2eded 100644
 --- a/dom/interfaces/base/nsIDOMWindowUtils.idl
 +++ b/dom/interfaces/base/nsIDOMWindowUtils.idl
 @@ -58,7 +58,7 @@ interface nsISynthesizedEventCallback : nsISupports {
@@ -649,7 +649,7 @@ index 6e145f876d72..69c87c329f9f 100644
    if (mWrBridge) {
      RefPtr<wr::WebRenderAPI> api = mWrBridge->GetWebRenderAPI();
 diff --git a/gfx/layers/ipc/CompositorBridgeParent.h b/gfx/layers/ipc/CompositorBridgeParent.h
-index 5ea2f2967817..6c27f256afba 100644
+index 11d5c1653ba3..a5468309c494 100644
 --- a/gfx/layers/ipc/CompositorBridgeParent.h
 +++ b/gfx/layers/ipc/CompositorBridgeParent.h
 @@ -26,6 +26,10 @@
@@ -672,7 +672,7 @@ index 5ea2f2967817..6c27f256afba 100644
    friend class CompositorThreadHolder;
    friend class InProcessCompositorSession;
    friend class gfx::GPUProcessManager;
-@@ -559,6 +563,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
+@@ -549,6 +553,10 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase {
        const WindowKind& aWindowKind) override;
    void EnsureWebRenderBridgeParentInitialized() override;
    RefPtr<WebRenderBridgeParent> GetWebRenderBridgeParent() const;
@@ -1295,10 +1295,10 @@ index 392656638935..d9a5e291c6cb 100644
    void PrependSheetOfType(Origin, StyleSheet*);
    void AppendSheetOfType(Origin, StyleSheet*);
 diff --git a/modules/libpref/init/StaticPrefList.yaml b/modules/libpref/init/StaticPrefList.yaml
-index cd9517130362..26ab4cdd440d 100644
+index ebae78e8e9cc..b60bc6af2bfe 100644
 --- a/modules/libpref/init/StaticPrefList.yaml
 +++ b/modules/libpref/init/StaticPrefList.yaml
-@@ -15122,7 +15122,7 @@
+@@ -15111,7 +15111,7 @@
  - name: network.process.enabled
    type: RelaxedAtomicBool
    mirror: always
@@ -1580,10 +1580,10 @@ index 2d14029f916b..b0294cfdc56f 100644
      pub fn is_supported_mime_type(&self, mime_type: &str) -> bool {
          match mime_type.parse::<Mime>() {
 diff --git a/servo/components/style/properties/mod.rs b/servo/components/style/properties/mod.rs
-index dadb97703889..4c698664abc2 100644
+index 923e43cd8d77..79a823c37e6a 100644
 --- a/servo/components/style/properties/mod.rs
 +++ b/servo/components/style/properties/mod.rs
-@@ -1503,14 +1503,18 @@ impl UnparsedValue {
+@@ -1505,14 +1505,18 @@ impl UnparsedValue {
              }
          }
  
@@ -1604,7 +1604,7 @@ index dadb97703889..4c698664abc2 100644
              Err(..) => return invalid_at_computed_value_time(),
          };
  
-@@ -1541,6 +1545,11 @@ impl UnparsedValue {
+@@ -1543,6 +1547,11 @@ impl UnparsedValue {
          input.skip_whitespace();
  
          if let Ok(keyword) = input.try_parse(CSSWideKeyword::parse) {
@@ -1616,7 +1616,7 @@ index dadb97703889..4c698664abc2 100644
              return Cow::Owned(PropertyDeclaration::css_wide_keyword(longhand_id, keyword));
          }
  
-@@ -1548,7 +1557,14 @@ impl UnparsedValue {
+@@ -1550,7 +1559,14 @@ impl UnparsedValue {
              None => {
                  return match input.parse_entirely(|input| longhand_id.parse_value(&context, input))
                  {
@@ -1632,7 +1632,7 @@ index dadb97703889..4c698664abc2 100644
                      Err(..) => invalid_at_computed_value_time(),
                  }
              },
-@@ -1578,7 +1594,14 @@ impl UnparsedValue {
+@@ -1580,7 +1596,14 @@ impl UnparsedValue {
  
          let key = (shorthand, longhand_id);
          match shorthand_cache.get(&key) {
@@ -1717,7 +1717,7 @@ index ac0fdd4ee019..bb5c3d9b5a2e 100644
          // Re-parse the result as a query-condition, and evaluate it.
          let parser_context = ParserContext::new(
 diff --git a/servo/ports/geckolib/glue.rs b/servo/ports/geckolib/glue.rs
-index 61fe7d84441b..f15e18aa2db5 100644
+index bd4ac9459026..059b6079cb23 100644
 --- a/servo/ports/geckolib/glue.rs
 +++ b/servo/ports/geckolib/glue.rs
 @@ -2080,6 +2080,14 @@ pub extern "C" fn Servo_StyleSet_UsesRootFontMetrics(raw_data: &PerDocumentStyle

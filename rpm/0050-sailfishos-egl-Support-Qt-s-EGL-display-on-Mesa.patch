@@ -460,7 +460,7 @@ index 2375865fb938..ad9e110215f6 100644
   public:
    ~EglDisplay();
 diff --git a/gfx/gl/SharedSurfaceEGL.cpp b/gfx/gl/SharedSurfaceEGL.cpp
-index fc4a2b6465e8..1a2dc57ba69e 100644
+index 5f8d73912fd6..db5b0b618849 100644
 --- a/gfx/gl/SharedSurfaceEGL.cpp
 +++ b/gfx/gl/SharedSurfaceEGL.cpp
 @@ -26,7 +26,8 @@ static bool HasEglImageExtensions(const GLContextEGL& gl) {

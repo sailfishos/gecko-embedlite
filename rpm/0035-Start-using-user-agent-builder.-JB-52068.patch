@@ -12,10 +12,10 @@ Signed-off-by: Raine Makelainen <raine.makelainen@jolla.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/netwerk/protocol/http/nsHttpHandler.cpp b/netwerk/protocol/http/nsHttpHandler.cpp
-index d7c4ee4d66f1..d9ed1a628fa6 100644
+index eccfe0a78087..1036b8cb2c25 100644
 --- a/netwerk/protocol/http/nsHttpHandler.cpp
 +++ b/netwerk/protocol/http/nsHttpHandler.cpp
-@@ -465,7 +465,7 @@ nsresult nsHttpHandler::Init() {
+@@ -473,7 +473,7 @@ nsresult nsHttpHandler::Init() {
  
    mRequestContextService = RequestContextService::GetOrCreate();
  
@@ -24,7 +24,7 @@ index d7c4ee4d66f1..d9ed1a628fa6 100644
    mProductSub.AssignLiteral(MOZILLA_UAVERSION);
  #else
    mProductSub.AssignLiteral(LEGACY_UA_GECKO_TRAIL);
-@@ -1178,7 +1178,9 @@ void nsHttpHandler::InitUserAgentComponents() {
+@@ -1186,7 +1186,9 @@ void nsHttpHandler::InitUserAgentComponents() {
    if (Preferences::GetBool(UA_PREF("use_device"), false)) {
      mDeviceModelId = mozilla::net::GetDeviceModelId();
    }

@@ -34,7 +34,7 @@ index bb486ec1e411..42ca0fecc66a 100644
              "linux/UPowerClient.cpp",
          ]
 diff --git a/toolkit/xre/nsAppRunner.cpp b/toolkit/xre/nsAppRunner.cpp
-index 968f5dc7888b..8ae9e8086a60 100644
+index 05eddbc64c8c..466bcbb4b5ab 100644
 --- a/toolkit/xre/nsAppRunner.cpp
 +++ b/toolkit/xre/nsAppRunner.cpp
 @@ -270,7 +270,7 @@

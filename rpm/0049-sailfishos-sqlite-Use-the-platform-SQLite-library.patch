@@ -37,10 +37,10 @@ configure define.
  create mode 100644 build/moz.configure/sqlite.configure
 
 diff --git a/browser/components/urlbar/private/SuggestBackendRust.sys.mjs b/browser/components/urlbar/private/SuggestBackendRust.sys.mjs
-index 04b2d57b4cf5..dccd55d14d80 100644
+index 3035ffe9c522..01bf080c2ab7 100644
 --- a/browser/components/urlbar/private/SuggestBackendRust.sys.mjs
 +++ b/browser/components/urlbar/private/SuggestBackendRust.sys.mjs
-@@ -623,11 +623,13 @@ export class SuggestBackendRust extends SuggestBackend {
+@@ -627,11 +627,13 @@ export class SuggestBackendRust extends SuggestBackend {
      try {
        builder = lazy.SuggestStoreBuilder.init()
          .dataPath(this.#storeDataPath)
@@ -561,7 +561,7 @@ index 83cb76cdb88a..cf20e451e07a 100644
  
  int AutoSQLiteLifetime::sSingletonEnforcer = 0;
 diff --git a/toolkit/xre/moz.build b/toolkit/xre/moz.build
-index b469578830e1..96fa5795df98 100644
+index e968885275d0..fefa4af499d2 100644
 --- a/toolkit/xre/moz.build
 +++ b/toolkit/xre/moz.build
 @@ -267,6 +267,8 @@ LOCAL_INCLUDES += [
