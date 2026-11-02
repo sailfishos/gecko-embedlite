@@ -512,6 +512,9 @@ echo "%{version}" > "$PWD/config/milestone.txt"
 %ifarch %ix86
 echo "ac_add_options --disable-startupcache" >> "$MOZCONFIG"
 echo "ac_add_options --host=i686-unknown-linux-gnu" >> "$MOZCONFIG"
+# mozconfig replaces the RPM flags; the x86 runtime needs SSE intrinsics.
+echo 'export CFLAGS="$CFLAGS -msse -msse2"' >> "$MOZCONFIG"
+echo 'export CXXFLAGS="$CXXFLAGS -msse -msse2"' >> "$MOZCONFIG"
 %endif
 
 %ifarch %arm32
