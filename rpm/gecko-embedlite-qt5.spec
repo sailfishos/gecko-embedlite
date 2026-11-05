@@ -144,6 +144,7 @@ Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.pa
 Patch85:    0085-sailfishos-Delegate-external-URLs-to-the-asynchronous.patch
 Patch86:    0086-sailfishos-Fix-external-protocol-permissions-and-fallback-retries.patch
 Patch87:    0087-sailfishos-Select-PDF-find-controls-for-the-embedder.patch
+Patch88:    0088-sailfishos-Use-native-system-colors-for-Qt-content.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0
