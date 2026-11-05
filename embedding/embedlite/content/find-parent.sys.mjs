@@ -3,10 +3,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { FinderParent } from "resource://gre/modules/FinderParent.sys.mjs";
+import { getPdfjsActor } from "resource://embedlite-components/EmbedLitePdfjsParent.sys.mjs";
 
 const searches = new WeakMap();
 
 export function findInPage(browser, data, emit) {
+  const pdf = getPdfjsActor(browser.browsingContext);
+  if (pdf) {
+    pdf.find(data, emit);
+    return Promise.resolve();
+  }
   let state = searches.get(browser);
   if (!state) {
     state = { pending: Promise.resolve(), sequence: 0 };
