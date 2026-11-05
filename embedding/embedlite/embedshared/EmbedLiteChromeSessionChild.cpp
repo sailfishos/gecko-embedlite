@@ -17,6 +17,7 @@
 #include "nsWindow.h"
 
 #include "InputData.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/NullPrincipal.h"
 #include "mozilla/OriginAttributes.h"
@@ -1543,7 +1544,15 @@ EmbedLiteChromeSessionChild::RestoreTabHistory(TabRecord& aTab)
     NS_ENSURE_SUCCESS(rv, rv);
     rv = entry->SetHasUserInteraction(true);
     NS_ENSURE_SUCCESS(rv, rv);
-    rv = entry->SetTriggeringPrincipal(principal);
+    nsCOMPtr<nsIPrincipal> triggeringPrincipal = principal.get();
+    if (uri->SchemeIs("file")) {
+      // Persisted local documents need their file origin when history is
+      // reloaded: a null principal cannot load a file URI.
+      triggeringPrincipal = BasePrincipal::CreateContentPrincipal(
+        uri, canonical->OriginAttributesRef());
+      NS_ENSURE_TRUE(triggeringPrincipal, NS_ERROR_OUT_OF_MEMORY);
+    }
+    rv = entry->SetTriggeringPrincipal(triggeringPrincipal);
     NS_ENSURE_SUCCESS(rv, rv);
     rv = sessionHistory->AddEntry(entry);
     NS_ENSURE_SUCCESS(rv, rv);
