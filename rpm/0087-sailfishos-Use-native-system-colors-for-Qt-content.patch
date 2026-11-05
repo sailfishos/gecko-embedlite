@@ -1,0 +1,72 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Date: Thu, 5 Nov 2026 12:39:17 +0100
+Subject: [gecko] Use native system colors for Qt content. JB#65849
+
+Use the paired Qt ambience palettes for document and control system colors.
+Preserve explicit privacy stand-ins, forced-color preferences, accent
+selection overrides and the existing behavior on other platforms.
+---
+ layout/style/PreferenceSheet.cpp | 8 +++++---
+ widget/LookAndFeel.h             | 8 ++++++++
+ widget/nsXPLookAndFeel.cpp       | 2 +-
+ 3 files changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/layout/style/PreferenceSheet.cpp b/layout/style/PreferenceSheet.cpp
+index 0b3a3179037a..527f8043b86a 100644
+--- a/layout/style/PreferenceSheet.cpp
++++ b/layout/style/PreferenceSheet.cpp
+@@ -87,8 +87,10 @@ void PreferenceSheet::Prefs::LoadColors(bool aIsLight) {
+   const auto scheme = aIsLight ? ColorScheme::Light : ColorScheme::Dark;
+   using ColorID = LookAndFeel::ColorID;
+ 
+-  if (!mIsChrome && (mUseDocumentColors || mUseStandins)) {
+-    // Tab content not in HCM, or we need to use standins.
++  if (!mIsChrome &&
++      (mUseStandins ||
++       (mUseDocumentColors && !LookAndFeel::UseNativeColorsForContent()))) {
++    // Generic tab-content palette, or explicitly required stand-ins.
+     auto GetStandinColor = [&scheme](ColorID aColorID, nscolor& aColor) {
+       aColor = LookAndFeel::Color(aColorID, scheme,
+                                   LookAndFeel::UseStandins::Yes, aColor);
+@@ -108,7 +110,7 @@ void PreferenceSheet::Prefs::LoadColors(bool aIsLight) {
+     GetColor("browser.active_color", scheme, colors.mActiveLink);
+     GetColor("browser.visited_color", scheme, colors.mVisitedLink);
+   } else {
+-    // Browser UI or OS HCM, use system colors.
++    // Browser UI, native content palette or OS HCM, use system colors.
+     auto GetSystemColor = [&scheme](ColorID aColorID, nscolor& aColor) {
+       aColor = LookAndFeel::Color(aColorID, scheme,
+                                   LookAndFeel::UseStandins::No, aColor);
+diff --git a/widget/LookAndFeel.h b/widget/LookAndFeel.h
+index 715bb9525ff9..2fec3fa9901d 100644
+--- a/widget/LookAndFeel.h
++++ b/widget/LookAndFeel.h
+@@ -346,6 +346,14 @@ class LookAndFeel {
+     return GetInt(IntID::UseOverlayScrollbars);
+   }
+ 
++  static constexpr bool UseNativeColorsForContent() {
++#ifdef MOZ_WIDGET_QT
++    return true;
++#else
++    return false;
++#endif
++  }
++
+   static constexpr int32_t kDefaultTooltipOffset = 21;
+   static int32_t TooltipOffsetVertical() {
+     return GetInt(IntID::TooltipOffsetVertical, kDefaultTooltipOffset);
+diff --git a/widget/nsXPLookAndFeel.cpp b/widget/nsXPLookAndFeel.cpp
+index 89f652ad71e4..83f59e3f0a09 100644
+--- a/widget/nsXPLookAndFeel.cpp
++++ b/widget/nsXPLookAndFeel.cpp
+@@ -1258,7 +1258,7 @@ static bool ShouldUseStandinsForNativeColorForNonNativeTheme(
+     const PreferenceSheet::Prefs& aPrefs) {
+   const bool shouldUseStandinsForColor = [&] {
+     if (sNonNativeThemeStandinColors[size_t(aColor)]) {
+-      return true;
++      return !LookAndFeel::UseNativeColorsForContent();
+     }
+     // There are platforms where we want the content-exposed accent color to be
+     // the windows blue rather than the system accent color, for now.

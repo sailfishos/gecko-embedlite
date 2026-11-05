@@ -143,6 +143,7 @@ Patch83:    0083-sailfishos-Notify-embedders-when-the-main-media-controller-chan
 Patch84:    0084-sailfishos-Propagate-hosted-rendering-state-to-remote-frames.patch
 Patch85:    0085-sailfishos-Delegate-external-URLs-to-the-asynchronous.patch
 Patch86:    0086-sailfishos-Fix-external-protocol-permissions-and-fallback-retries.patch
+Patch87:    0087-sailfishos-Use-native-system-colors-for-Qt-content.patch
 
 BuildRequires:  rust >= 1.90.0
 BuildRequires:  rust-std-static >= 1.90.0
