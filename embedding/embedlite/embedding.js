@@ -278,6 +278,17 @@ pref("full-screen-api.enabled", true);
 // running in actual Metro mode, as the widget will already be fullscreen then.
 pref("full-screen-api.ignore-widgets", true);
 
+// PDF.js uses Browser's find and download controls. Desktop-only editing and
+// model services are not part of the embedded viewer.
+pref("pdfjs.annotationEditorMode", -1);
+pref("pdfjs.enableAltText", false);
+pref("pdfjs.enableAltTextModelDownload", false);
+pref("pdfjs.enableGuessAltText", false);
+pref("pdfjs.enableSignatureEditor", false);
+pref("pdfjs.enableComment", false);
+pref("pdfjs.enableSplitMerge", false);
+pref("pdfjs.enableMerge", false);
+
 // Disable telemetry services and Glean uploads.
 pref("toolkit.telemetry.unified", false);
 pref("toolkit.telemetry.enabled", false);

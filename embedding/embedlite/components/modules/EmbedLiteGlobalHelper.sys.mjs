@@ -23,6 +23,23 @@ ChromeUtils.importESModule("resource://gre/modules/CustomElementsListener.sys.mj
 // Firefox's normal browser chrome bootstrap that would otherwise do this.
 ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");
 
+// PDF.js normally registers its actors from Firefox's desktop startup.
+try {
+  ChromeUtils.registerWindowActor("Pdfjs", {
+    parent: {
+      esModuleURI: "resource://embedlite-components/EmbedLitePdfjsParent.sys.mjs",
+    },
+    child: {
+      esModuleURI: "resource://pdf.js/PdfjsChild.sys.mjs",
+    },
+    allFrames: true,
+  });
+} catch (error) {
+  if (error.result !== Cr.NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
+    throw error;
+  }
+}
+
 // Use the same EmbedLite request/response bridge as the other native pickers.
 // ActorManagerParent registers the generic Gecko date picker first, so replace
 // that registration before content documents can request one.
@@ -202,6 +219,11 @@ EmbedLiteGlobalHelper.prototype = {
         // Start the shared timer manager so Remote Settings and UA updates run.
         Cc["@mozilla.org/updates/timer-manager;1"].getService(Ci.nsIObserver)
           .observe(aSubject, aTopic, aData);
+
+        const { PdfJs } = ChromeUtils.importESModule(
+          "resource://pdf.js/PdfJs.sys.mjs"
+        );
+        PdfJs.init();
         break;
       }
       case "xpcom-shutdown": {

@@ -42,6 +42,9 @@ XPCOMUtils.defineLazyServiceGetter(
 );
 
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
+const { getPdfjsActor } = ChromeUtils.importESModule(
+  "resource://embedlite-components/EmbedLitePdfjsParent.sys.mjs"
+);
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadViewer
@@ -292,6 +295,12 @@ EmbedliteDownloadManager.prototype = {
             }
 
             if (source) {
+              const context = source.browsingContext || source.window.browsingContext;
+              const pdf = getPdfjsActor(context);
+              if (pdf) {
+                pdf.save(data.to);
+                break;
+              }
               (async function() {
                 let list = await Downloads.getList(Downloads.ALL);
                 let download = await DownloadPDFSaver.createDownload({
