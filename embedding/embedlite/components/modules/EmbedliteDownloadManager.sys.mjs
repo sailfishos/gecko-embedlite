@@ -288,7 +288,18 @@ EmbedliteDownloadManager.prototype = {
                 Logger.warn("No hosted tab to print to pdf", error);
               }
             } else if (Services.ww.activeWindow) {
-              source = { window: Services.ww.activeWindow };
+              const window = Services.ww.activeWindow;
+              if (window.browsingContext.isContent) {
+                source = { window };
+              } else {
+                // Hosted WebViews expose a chrome window. Print its selected
+                // content browser, not the embedding document itself.
+                const browser = window.document.querySelector(
+                  'browser[primary="true"]');
+                if (browser?.browsingContext) {
+                  source = { browsingContext: browser.browsingContext };
+                }
+              }
             }
 
             if (source) {
