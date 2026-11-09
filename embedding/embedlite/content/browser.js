@@ -8,6 +8,8 @@
   const Ci = Components.interfaces;
   const { findInPage } = ChromeUtils.importESModule(
     "chrome://embedlitechrome/content/find-parent.sys.mjs");
+  const { getPdfjsActor } = ChromeUtils.importESModule(
+    "resource://embedlite-components/EmbedLitePdfjsParent.sys.mjs");
   try {
     ChromeUtils.registerWindowActor("Finder", {
       child: { esModuleURI: "resource://gre/actors/FinderChild.sys.mjs" },
@@ -328,6 +330,15 @@
           removeMessageListener(browser, name);
           break;
         case "send-message": {
+          if (name === "embedui:pdfState") {
+            if (messageNames.has("embed:pdfState")) {
+              emit(browser, "EmbedLiteChromeContentMessage", "embed:pdfState", {
+                request: JSON.parse(data).request,
+                isPdf: !!getPdfjsActor(browser.browsingContext),
+              });
+            }
+            break;
+          }
           if (name === "embedui:textZoom") {
             const zoom = Number(JSON.parse(data)?.zoom);
             textZooms.set(browser, Number.isFinite(zoom) && zoom > 0 ? zoom : 1.0);

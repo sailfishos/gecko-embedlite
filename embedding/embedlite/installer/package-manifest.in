@@ -97,6 +97,8 @@
 @BINPATH@/chrome/embedlitechrome.manifest
 @BINPATH@/chrome/toolkit@JAREXT@
 @BINPATH@/chrome/toolkit.manifest
+@BINPATH@/chrome/pdfjs.manifest
+@BINPATH@/chrome/pdfjs/*
 
 ; [Extensions]
 @BINPATH@/components/extensions-toolkit.manifest

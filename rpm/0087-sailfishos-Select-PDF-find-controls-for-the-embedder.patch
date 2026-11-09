@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Andrew Branson <andrew.branson@jolla.com>
+Subject: [sailfishos] Select PDF find controls for the embedder
+
+Use native find controls when the host provides them. Hide the desktop
+PDF.js toolbar in every embedded viewer and fill the available viewport.
+Leave printing to the host: EmbedLite does not provide Firefox's print dialog.
+---
+diff --git a/toolkit/components/pdfjs/content/PdfStreamConverter.sys.mjs b/toolkit/components/pdfjs/content/PdfStreamConverter.sys.mjs
+index 4d76863c122d..5c630386622c 100644
+--- a/toolkit/components/pdfjs/content/PdfStreamConverter.sys.mjs
++++ b/toolkit/components/pdfjs/content/PdfStreamConverter.sys.mjs
+@@ -426,7 +426,11 @@ class ChromeActions {
+ 
+   supportsIntegratedFind() {
+     // Integrated find is only supported when we're not in a frame
+-    return this.domWindow.windowGlobalChild.browsingContext.parent === null;
++    return (
++      this.domWindow.windowGlobalChild.browsingContext.parent === null &&
++      (AppConstants.MOZ_BUILD_APP !== "mobile/sailfishos" ||
++        Services.prefs.getBoolPref("embedlite.pdfjs.integratedFind", false))
++    );
+   }
+ 
+   supportsDownloading() {
+@@ -468,7 +472,9 @@ class ChromeActions {
+       supportsMouseWheelZoomMetaKey:
+         Services.prefs.getIntPref("mousewheel.with_meta.action") === 3,
+       supportsPinchToZoom: Services.prefs.getBoolPref("apz.allow_zooming"),
+-      supportsPrinting: Services.prefs.getBoolPref("print.enabled"),
++      supportsPrinting:
++        AppConstants.MOZ_BUILD_APP !== "mobile/sailfishos" &&
++        Services.prefs.getBoolPref("print.enabled"),
+       supportsCaretBrowsingMode: Services.prefs.getBoolPref(
+         caretBrowsingModePref
+       ),
+diff --git a/toolkit/components/pdfjs/content/web/viewer.css b/toolkit/components/pdfjs/content/web/viewer.css
+index 4ce0150f07ca..1f188d5b0be4 100644
+--- a/toolkit/components/pdfjs/content/web/viewer.css
++++ b/toolkit/components/pdfjs/content/web/viewer.css
+@@ -7481,3 +7481,15 @@ dialog :link{
+     display:none;
+   }
+ }
++
++:root{
++  --toolbar-height:0px;
++}
++
++#mainContainer > .toolbar{
++  display:none;
++}
++
++#viewerContainer{
++  inset:0 !important;
++}
