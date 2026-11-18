@@ -390,6 +390,10 @@ nsLookAndFeel::NativeGetInt(IntID aID, int32_t &aResult)
             aResult = mObserver->GetDarkAmbience() ? 1 : 0;
             break;
 
+        case IntID::UseOverlayScrollbars:
+            aResult = 1;
+            break;
+
         case IntID::DragThresholdX:
         case IntID::DragThresholdY:
           // Threshold where a tap becomes a drag, in 1/240" reference pixels.
