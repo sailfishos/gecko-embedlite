@@ -3,23 +3,85 @@ From: David Llewellyn-Jones <david@flypig.co.uk>
 Date: Wed, 5 Aug 2026 11:24:54 +0200
 Subject: Allow file scheme when loading OpenSearch providers
 
-Allow packaged Sailfish OpenSearch XML providers to load from disk.
+Load packaged and user-saved XML through a file content principal only
+when explicitly requested by the embedder. Keep network loads isolated.
 
 The scheme validation moved to OpenSearchLoader in ESR140.
 ---
- toolkit/components/search/OpenSearchLoader.sys.mjs | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ toolkit/components/search/OpenSearchLoader.sys.mjs | 15 ++++++++++-----
+ toolkit/components/search/SearchService.sys.mjs    |  4 ++--
+ 2 files changed, 12 insertions(+), 7 deletions(-)
 
 diff --git a/toolkit/components/search/OpenSearchLoader.sys.mjs b/toolkit/components/search/OpenSearchLoader.sys.mjs
-index 77b5d333be0d..76c75e60ffdb 100644
+index 77b5d33..65fd9da 100644
 --- a/toolkit/components/search/OpenSearchLoader.sys.mjs
 +++ b/toolkit/components/search/OpenSearchLoader.sys.mjs
-@@ -50,7 +50,7 @@ export async function loadAndParseOpenSearchEngine(
+@@ -31,7 +31,7 @@ const lazy = XPCOMUtils.declareLazy({
+ /**
+  * Retrieves the engine data from a URI and returns it.
+  *
+- * @param {nsIURI} sourceURI
++ * @param {nsIURI|nsIFileChannel} sourceURI
+  *   The uri from which to load the OpenSearch engine data.
+  * @param {string} [lastModified]
+  *   The UTC date when the engine was last updated, if any.
+@@ -50,7 +50,11 @@ export async function loadAndParseOpenSearchEngine(
    if (!sourceURI) {
      throw new TypeError("No URI");
    }
 -  if (!/^https?$/i.test(sourceURI.scheme)) {
-+  if (!/^(?:https?|file)$/i.test(sourceURI.scheme)) {
++  let localChannel;
++  if (sourceURI instanceof Ci.nsIFileChannel) {
++    localChannel = sourceURI;
++    sourceURI = localChannel.URI;
++  } else if (!/^https?$/i.test(sourceURI.scheme)) {
      throw new TypeError(
        "Unsupported URI scheme passed to SearchEngine constructor"
+     );
+@@ -58,7 +62,7 @@ export async function loadAndParseOpenSearchEngine(
+ 
+   lazy.logConsole.debug("Downloading OpenSearch engine from:", sourceURI.spec);
+ 
+-  let xmlData = await loadEngineXML(sourceURI, lastModified, originAttributes);
++  let xmlData = await loadEngineXML(sourceURI, lastModified, originAttributes, localChannel);
+ 
+   lazy.logConsole.debug("Loading search plugin");
+ 
+@@ -169,12 +173,13 @@ async function parseInHiddenBrowser(xmlData) {
+  *   The UTC date when the engine was last updated, if any.
+  * @param {object} [originAttributes]
+  *   The origin attributes to use to load the manifest.
++ * @param {nsIFileChannel} [localChannel] File channel supplied by the embedder.
+  * @returns {Promise}
+  *   A promise that is resolved with the data if the engine is successfully loaded
+  *   and rejected otherwise.
+  */
+-function loadEngineXML(sourceURI, lastModified, originAttributes = null) {
+-  var chan = lazy.SearchUtils.makeChannel(
++function loadEngineXML(sourceURI, lastModified, originAttributes, localChannel) {
++  var chan = localChannel ?? lazy.SearchUtils.makeChannel(
+     sourceURI,
+     // OpenSearchEngine is loading a definition file for a search engine,
+     // TYPE_DOCUMENT captures that load best.
+diff --git a/toolkit/components/search/SearchService.sys.mjs b/toolkit/components/search/SearchService.sys.mjs
+index 2d0f0d1..303aa53 100644
+--- a/toolkit/components/search/SearchService.sys.mjs
++++ b/toolkit/components/search/SearchService.sys.mjs
+@@ -803,7 +803,7 @@ export const SearchService = new (class SearchService {
+   /**
+    * Adds a new Open Search engine from the xml file at the supplied URI.
+    *
+-   * @param {string} engineURL
++   * @param {string|nsIFileChannel} engineURL
+    *   The URL to the search engine's description file.
+    * @param {string} iconURL
+    *   A URL string to an icon file to be used as the search engine's icon. This
+@@ -818,7 +818,7 @@ export const SearchService = new (class SearchService {
+     lazy.logConsole.debug("addOpenSearchEngine: Adding", engineURL);
+     await this.init();
+     let engineData = await lazy.loadAndParseOpenSearchEngine(
+-      Services.io.newURI(engineURL),
++      engineURL instanceof Ci.nsIFileChannel ? engineURL : Services.io.newURI(engineURL),
+       null,
+       originAttributes
      );

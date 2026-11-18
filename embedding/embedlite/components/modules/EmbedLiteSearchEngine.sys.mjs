@@ -20,6 +20,43 @@ Services.scriptloader.loadSubScript(
 );
 const { Logger } = loggerScope;
 
+async function addOpenSearchEngine(url) {
+  let uri = Services.io.newURI(url);
+  if (!uri.schemeIs("file")) {
+    return lazy.SearchService.addOpenSearchEngine(url, null);
+  }
+
+  let file = uri.QueryInterface(Ci.nsIFileURL).file;
+  file.normalize();
+  let packaged = Services.dirsvc.get("GreD", Ci.nsIFile);
+  packaged.appendRelativePath("chrome/embedlite/content");
+  let saved = Services.dirsvc.get("Home", Ci.nsIFile);
+  saved.appendRelativePath(".local/share/org.sailfishos/browser/searchEngines");
+  if (
+    uri.host ||
+    !file.leafName.endsWith(".xml") ||
+    !(file.parent?.equals(packaged) || file.parent?.equals(saved)) ||
+    !file.isFile()
+  ) {
+    throw new TypeError("Invalid local OpenSearch definition");
+  }
+
+  let fileURI = Services.io.newFileURI(file);
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
+    fileURI,
+    {}
+  );
+  let channel = Services.io.newChannelFromURI(
+    fileURI,
+    null,
+    principal,
+    null,
+    Ci.nsILoadInfo.SEC_REQUIRE_SAME_ORIGIN_INHERITS_SEC_CONTEXT,
+    Ci.nsIContentPolicy.TYPE_DOCUMENT
+  );
+  return lazy.SearchService.addOpenSearchEngine(channel, null);
+}
+
 // Common helper service
 export function EmbedLiteSearchEngine()
 {
@@ -84,7 +121,7 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "loadxml": {
-            lazy.SearchService.addOpenSearchEngine(data.uri, null).then(
+            addOpenSearchEngine(data.uri).then(
               engine => {
                 var message = {
                   "msg": "search-engine-added",
