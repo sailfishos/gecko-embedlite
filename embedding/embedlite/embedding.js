@@ -2,35 +2,6 @@ pref("dom.w3c_touch_events.enabled", 1);
 pref("dom.w3c_touch_events.legacy_apis.enabled", true);
 pref("dom.meta-viewport.enabled", true);
 
-// Override some named colors to avoid inverse OS themes
-pref("ui.-moz-dialog", "#efebe7");
-pref("ui.-moz-dialogtext", "#101010");
-pref("ui.-moz-field", "#fff");
-pref("ui.-moz-fieldtext", "#1a1a1a");
-pref("ui.-moz-buttonhoverface", "#f3f0ed");
-pref("ui.-moz_buttonhovertext", "#101010");
-pref("ui.-moz-combobox", "#fff");
-pref("ui.-moz-comboboxtext", "#101010");
-pref("ui.buttonface", "#ece7e2");
-pref("ui.buttonhighlight", "#fff");
-pref("ui.buttonshadow", "#aea194");
-pref("ui.buttontext", "#101010");
-pref("ui.captiontext", "#101010");
-pref("ui.graytext", "#b1a598");
-pref("ui.highlight", "#fad184");
-pref("ui.highlighttext", "#1a1a1a");
-pref("ui.infobackground", "#f5f5b5");
-pref("ui.infotext", "#000");
-pref("ui.menu", "#f7f5f3");
-pref("ui.menutext", "#101010");
-pref("ui.threeddarkshadow", "#000");
-pref("ui.threedface", "#ece7e2");
-pref("ui.threedhighlight", "#fff");
-pref("ui.threedlightshadow", "#ece7e2");
-pref("ui.threedshadow", "#aea194");
-pref("ui.window", "#efebe7");
-pref("ui.windowtext", "#101010");
-pref("ui.windowframe", "#efebe7");
 // WebGL prefs
 // Disable MSAA on mobile (similar to Android)
 pref("webgl.msaa-samples", 0);

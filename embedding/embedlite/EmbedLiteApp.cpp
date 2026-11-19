@@ -24,6 +24,7 @@
 #include "mozilla/GenericFactory.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Logging.h"
+#include "mozilla/LookAndFeel.h"
 #include "mozilla/ModuleUtils.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/ImageBridgeChild.h"
@@ -272,6 +273,7 @@ EmbedLiteApp::StartRuntimeTask(EmbedLiteApp* aApp)
   }
 
   aApp->SetState(INITIALIZED);
+  LookAndFeel::EnsureInit();
   if (aApp->mListener) {
     aApp->mListener->Initialized();
   }
